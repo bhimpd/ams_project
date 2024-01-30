@@ -159,7 +159,7 @@ class Category
       }
       return [
         "status" => "true",
-        "message" => "Parent updated successfully",
+        "message" => "Value updated successfully",
       ];
 
     } catch (\Exception $e) {
