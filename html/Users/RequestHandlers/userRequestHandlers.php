@@ -135,6 +135,7 @@ class UserRequestHandlers
       $fetchUserId = $userObj->get(NULL, $decodedData["username"]);
       echo "userid<br>";
       print_r( $fetchUserId );
+      die($fetchUserId);
       $userId = $fetchUserId["id"];
       unset($fetchUserId);
       $decodedData["id"] = $userId;
