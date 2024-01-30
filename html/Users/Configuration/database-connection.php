@@ -17,9 +17,9 @@ class DBConnect
   //begins connection on object instantiation
   public function __construct()
   {
-    $this->hostname = getenv('MYSQL_HOST');
-    $this->username = getenv('MYSQL_USER');
-    $this->password = getenv('MYSQL_PASSWORD');
+    $this->hostname = "amsdb";
+    $this->username = "sanchay";
+    $this->password = "sanchay";
     $this->connectToDatabase();
   }
 
