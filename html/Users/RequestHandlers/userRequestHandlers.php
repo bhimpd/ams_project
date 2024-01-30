@@ -130,8 +130,11 @@ class UserRequestHandlers
       }
 
       $result = $userObj->create($jsonData);
-
+      echo "result<br>";
+      print_r( $result );
       $fetchUserId = $userObj->get(NULL, $decodedData["username"]);
+      echo "userid<br>";
+      print_r( $fetchUserId );
       $userId = $fetchUserId["id"];
       unset($fetchUserId);
       $decodedData["id"] = $userId;
