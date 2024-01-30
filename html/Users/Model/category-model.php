@@ -152,7 +152,6 @@ class Category
         WHERE category_name = '$data[previouscategory_name]'
         ";
       }
-      print_r($sql);
       $result = $this->DBconn->conn->query($sql);
 
       if (!$result) {
