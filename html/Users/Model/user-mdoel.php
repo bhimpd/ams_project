@@ -49,7 +49,7 @@ class User
   public function getAll()
   {
     try {
-      $sql = "SELECT * FROM User";
+      $sql = "SELECT * FROM user";
       $result = $this->DBconn->conn->query($sql);
 
       $data = $result->fetch_all(MYSQLI_ASSOC);
@@ -84,7 +84,7 @@ class User
       //checks for id
       if (isset($id)) {
 
-        $sql = "SELECT * FROM User where id = $id";
+        $sql = "SELECT * FROM user where id = $id";
         $result = $this->DBconn->conn->query($sql);
 
         if (!$result->num_rows > 0) {
@@ -98,7 +98,7 @@ class User
       //checks for username
       if (isset($username)) {
 
-        $sql = "SELECT * FROM User where username = '$username'";
+        $sql = "SELECT * FROM user where username = '$username'";
         $result = $this->DBconn->conn->query($sql);
 
         if ($result->num_rows == 0) {
@@ -176,7 +176,7 @@ class User
         //hashing the inserted password
         $data["password"] = password_hash($data["password"], PASSWORD_BCRYPT);
         $sql = "
-        INSERT INTO User 
+        INSERT INTO user 
       (email , password , username,  name  , user_type)
       VALUES
       ('$data[email]' , '$data[password]' ,'$data[username]' ,'$data[name]' ,'$data[user_type]')
@@ -202,7 +202,7 @@ class User
   {
     try {
       $sql = "
-      DELETE FROM User 
+      DELETE FROM user 
       WHERE id = '$id'
       ";
       $result = $this->DBconn->conn->query($sql);
