@@ -16,7 +16,7 @@ jobs:
       - name: Rsync files
         uses: burnett01/rsync-deployments@5.2.1
         with:
-          switches: -avzr --delete --exclude=".git/" --exclude=".gitignore" --exclude=".github/" --exclude="db/" 
+          switches: -avzr --delete --exclude=".git/" --exclude=".gitignore" --exclude=".github/" --exclude="db/" --exclude="html/User/vendor/" 
           remote_host: ${{secrets.DO_HOST_DEV}}
           remote_user: ${{secrets.SSH_USERNAME_DEV}}
           remote_key: ${{secrets.SSH_KEY_DEV}}
@@ -31,5 +31,5 @@ jobs:
           script: |
             cd /home/cigweld/ams
             chmod -R 777 ./html
-            
-          
+            cd html/User
+            composer install
