@@ -36,6 +36,7 @@ class User
   {
     $response = UserRequestHandlers::getUser();
     print_r( $response );
+    die("sanchay");
     return Response::respondWithJson($response, $response["statusCode"]);
   }
   public static function update()
