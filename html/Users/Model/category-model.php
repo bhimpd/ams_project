@@ -16,7 +16,7 @@ class Category
   {
     try {
       $sql = "
-        SELECT * FROM Category
+        SELECT * FROM category
       ";
       $result = $this->DBconn->conn->query($sql);
 
