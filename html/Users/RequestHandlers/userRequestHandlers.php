@@ -14,24 +14,25 @@ class UserRequestHandlers
 {
   public static function getUser()
   {
-    $response = Authorization::verifyToken();
-    if (!$response["status"]) {
-      return [
-        "status" => false,
-        "statusCode" => "401",
-        "message" => $response["message"],
-        "data" => []
-      ];
-    }
-    //checks if user is not admin
-    if ($response["data"]["user_type"] !== "admin") {
-      return [
-        "status" => false,
-        "statusCode" => 401,
-        "message" => "User unauthorised",
-        "data" => $response["data"]
-      ];
-    }
+    // $response = Authorization::verifyToken();
+    // echo "hello ram";
+    // if (!$response["status"]) {
+    //   return [
+    //     "status" => false,
+    //     "statusCode" => "401",
+    //     "message" => $response["message"],
+    //     "data" => []
+    //   ];
+    // }
+    // //checks if user is not admin
+    // if ($response["data"]["user_type"] !== "admin") {
+    //   return [
+    //     "status" => false,
+    //     "statusCode" => 401,
+    //     "message" => "User unauthorised",
+    //     "data" => $response["data"]
+    //   ];
+    // }
     $id = $_GET["id"] ?? NULL;
     $username = $_GET["username"] ?? NULL;
     echo "Code is execute";
