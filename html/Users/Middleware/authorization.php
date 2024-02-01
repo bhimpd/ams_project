@@ -38,10 +38,12 @@ class Authorization implements AuthorizationInterface
 
       $token = $result["data"]["token"];
 
-      $payload = JWT::decode($token, new key(JWTTokenHandlerAndAuthentication::$secret, JWTTokenHandlerAndAuthentication::$alg));
-      print_r($payload);
+      $decoded = JWT::decode($token, JWTTokenHandlerAndAuthentication::$secret);
+
+      // $payload = JWT::decode($token, new key(JWTTokenHandlerAndAuthentication::$secret, JWTTokenHandlerAndAuthentication::$alg));
+      print_r($decoded);
       die( "code is fire");
-      if (!$payload) {
+      if (!$decoded) {
         throw new \Exception("Payload not found!!");
       }
 

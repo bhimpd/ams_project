@@ -53,7 +53,7 @@ class JWTTokenHandlerAndAuthentication extends Authentication
 
   static $token = [];
   static $tokenBlackList = [];
-  static $secret = "INTUJI_SECRET_KEY";
+  static $secret = "intuji_sanchay";
   // static $secretForNormalUser = "PINKUJI_SECRET KEY";
   static $alg = 'HS256';
 
