@@ -1,6 +1,8 @@
 <?php
 
+require_once __DIR__."/../Configuration/cors.php";
 require_once __DIR__ . "/../vendor/autoload.php";
+
 foreach (glob(__DIR__ . '/../Routes/*.php') as $file) {
 
   require_once $file;
