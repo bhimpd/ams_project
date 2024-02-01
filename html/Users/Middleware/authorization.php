@@ -36,8 +36,7 @@ class Authorization implements AuthorizationInterface
 
       $token = $result["data"]["token"];
       $payload = Token::Verify($token, JWTTokenHandlerAndAuthentication::$secret);
-      print_r( $payload );
-      die("sanchsdfd ");
+      
       $providedToken = $token;
       $sessionToken = $_SESSION["authToken"];
       //check if the token is same one present in session
@@ -48,9 +47,8 @@ class Authorization implements AuthorizationInterface
         "status" => true,
         "message" => "User authorised using authToken.",
         "data" => [
-          "id" => $payload->data->id,
-          // "username" => $payload->data->username,
-          "user_type" => $payload->data->user_type
+          "id" => $payload['id'],
+          "user_type" => $payload['user_type']
         ],
         "authToken" => $token
       ];

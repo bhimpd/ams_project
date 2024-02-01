@@ -15,7 +15,6 @@ class UserRequestHandlers
   public static function getUser()
   {
     $response = Authorization::verifyToken();
-    echo "hello ram";
     if (!$response["status"]) {
       return [
         "status" => false,
@@ -35,7 +34,6 @@ class UserRequestHandlers
     }
     $id = $_GET["id"] ?? NULL;
     $username = $_GET["username"] ?? NULL;
-    echo "Code is execute";
     if ($id == NULL && $username == NULL) {
       return self::getAllUser();
     }
