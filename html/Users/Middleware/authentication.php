@@ -5,6 +5,7 @@ use Model\User;
 use Configg\Session;
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\key;
+use Config\Token;
 
 /** 
  * checks if the user is present in the database
@@ -51,7 +52,7 @@ abstract class Authentication
 class JWTTokenHandlerAndAuthentication extends Authentication
 {
 
-  static $token = [];
+  // static $token = [];
   static $tokenBlackList = [];
   static $secret = "intuji_sanchay";
   // static $secretForNormalUser = "PINKUJI_SECRET KEY";
@@ -65,14 +66,14 @@ class JWTTokenHandlerAndAuthentication extends Authentication
   public static function createToken(array $payload, int $exp = 3600)
   {
     try {
-      self::$token = [
-        "iat" => time(),
-        "exp" => time() + $exp,
-        "data" => $payload
-      ];
-      self::$token = JWT::encode(self::$token, self::$secret, self::$alg);
+      // self::$token = [
+      //   "iat" => time(),
+      //   "exp" => time() + $exp,
+      //   "data" => $payload
+      // ];
+      $token = Token::encode($payload, self::$secret, time() + $exp );
 
-      return self::$token;
+      return $token;
 
     } catch (\Exception $e) {
       error_log($e->getMessage());

@@ -2,6 +2,7 @@
 
 namespace Middleware;
 
+use Config\Token;
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\key;
 use Middleware\JWTTokenHandlerAndAuthentication;
@@ -29,24 +30,14 @@ class Authorization implements AuthorizationInterface
   {
     try {
       $result = self::getBrearerToken();
-      print_r( $_SERVER );
-      print_r( $result );
-      
       if (!$result["status"]) {
         throw new \Exception($result["message"]);
       }
 
       $token = $result["data"]["token"];
-
-      $decoded = JWT::decode($token, JWTTokenHandlerAndAuthentication::$secret, array("HS256"));
-
-      // $payload = JWT::decode($token, new key(JWTTokenHandlerAndAuthentication::$secret, JWTTokenHandlerAndAuthentication::$alg));
-      print_r($decoded);
-      die( "code is fire");
-      if (!$decoded) {
-        throw new \Exception("Payload not found!!");
-      }
-
+      $payload = Token::Verify($token, JWTTokenHandlerAndAuthentication::$secret);
+      print_r( $payload );
+      die("sanchsdfd ");
       $providedToken = $token;
       $sessionToken = $_SESSION["authToken"];
       //check if the token is same one present in session
@@ -57,9 +48,9 @@ class Authorization implements AuthorizationInterface
         "status" => true,
         "message" => "User authorised using authToken.",
         "data" => [
-          "id" => $decoded,
+          "id" => $payload->data->id,
           // "username" => $payload->data->username,
-          "user_type" =>""
+          "user_type" => $payload->data->user_type
         ],
         "authToken" => $token
       ];
