@@ -139,7 +139,7 @@ class User
 
         $data = json_decode($data, true);
         $data["password"] = password_hash($data["password"], PASSWORD_BCRYPT);
-        $sql = "UPDATE User 
+        $sql = "UPDATE user 
       SET email = '$data[email]' ,
           password = '$data[password]' ,
           username = '$data[username]' ,
