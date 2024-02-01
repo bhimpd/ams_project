@@ -31,7 +31,7 @@ class Authorization implements AuthorizationInterface
       $result = self::getBrearerToken();
       print_r( $_SERVER );
       print_r( $result );
-      die( "code is fire");
+      
       if (!$result["status"]) {
         throw new \Exception($result["message"]);
       }
@@ -39,7 +39,8 @@ class Authorization implements AuthorizationInterface
       $token = $result["data"]["token"];
 
       $payload = JWT::decode($token, new key(JWTTokenHandlerAndAuthentication::$secret, JWTTokenHandlerAndAuthentication::$alg));
-
+      print_r($payload);
+      die( "code is fire");
       if (!$payload) {
         throw new \Exception("Payload not found!!");
       }
