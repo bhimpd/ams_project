@@ -2,7 +2,7 @@
 
 header("Access-Control-Allow-Origin: *");
 // Allow specific HTTP methods
-header("Access-Control-Allow-Methods: POST, GET,PUT, OPTIONS");
+header("Access-Control-Allow-Methods: POST, GET,PUT,DELETE, PATCH , OPTIONS");
 
 // Allow specific headers
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
