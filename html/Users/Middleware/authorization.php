@@ -29,6 +29,9 @@ class Authorization implements AuthorizationInterface
   {
     try {
       $result = self::getBrearerToken();
+      print_r( $_SERVER );
+      print_r( $result );
+      die( "code is fire");
       if (!$result["status"]) {
         throw new \Exception($result["message"]);
       }
