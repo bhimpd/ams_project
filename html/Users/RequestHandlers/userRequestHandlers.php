@@ -34,6 +34,7 @@ class UserRequestHandlers
     }
     $id = $_GET["id"] ?? NULL;
     $username = $_GET["username"] ?? NULL;
+    echo "Code is execute";
     if ($id == NULL && $username == NULL) {
       return self::getAllUser();
     }
@@ -41,6 +42,12 @@ class UserRequestHandlers
   }
   public static function getAllUser()
   {
+    return  [
+      "status" => true,
+      "statusCode" => "200",
+      "message" => "My code is fixed",
+      "data" => []
+    ];
     try {
       $userObj = new User(new DBConnect());
       $result = $userObj->getAll();

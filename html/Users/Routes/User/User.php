@@ -35,7 +35,8 @@ class User
   public static function get()
   {
     $response = UserRequestHandlers::getUser();
-    Response::respondWithJson($response, $response["statusCode"]);
+    print_r( $response );
+    return Response::respondWithJson($response, $response["statusCode"]);
   }
   public static function update()
   {
