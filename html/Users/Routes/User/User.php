@@ -34,8 +34,8 @@ class User
   }
   public static function get()
   {
-    $response = UserRequestHandlers::getUser();
-    print_r( $response );
+    // $response = UserRequestHandlers::getUser();
+    // print_r( $response );
     die("sanchay");
     return Response::respondWithJson($response, $response["statusCode"]);
   }
