@@ -38,7 +38,7 @@ class Authorization implements AuthorizationInterface
 
       $token = $result["data"]["token"];
 
-      $decoded = JWT::decode($token, JWTTokenHandlerAndAuthentication::$secret);
+      $decoded = JWT::decode($token, JWTTokenHandlerAndAuthentication::$secret, array("HS256"));
 
       // $payload = JWT::decode($token, new key(JWTTokenHandlerAndAuthentication::$secret, JWTTokenHandlerAndAuthentication::$alg));
       print_r($decoded);
@@ -57,9 +57,9 @@ class Authorization implements AuthorizationInterface
         "status" => true,
         "message" => "User authorised using authToken.",
         "data" => [
-          "id" => $payload->data->id,
+          "id" => $decoded,
           // "username" => $payload->data->username,
-          "user_type" => $payload->data->user_type
+          "user_type" =>""
         ],
         "authToken" => $token
       ];
