@@ -51,7 +51,7 @@ class Token{
         // Verigy Signature
         $signature = base64_encode(hash_hmac('SHA256',$token_parts[0].$token_parts[1],$key));
         if($signature != $token_parts[2]){
-            throw new \Exception("Token is invalid");
+            throw new \Exception("Token is invalid sanchay");
         }
 
         // Decode headers & payload
@@ -60,7 +60,7 @@ class Token{
 
         // Verify validity
         if(isset($headers['expire']) && $headers['expire'] < time()){
-            throw new \Exception("Token is expaired");
+            throw new \Exception("Token is expaired sanchay");
         }
 
         // If token successfully verified
