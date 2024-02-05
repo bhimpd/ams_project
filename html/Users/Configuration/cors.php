@@ -5,10 +5,10 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, GET,PUT,DELETE, PATCH , OPTIONS");
 
 // Allow specific headers
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Allow-Headers: *");
 
 // Set the age to 1 day to improve speed/caching.
-header('Access-Control-Max-Age: 86400');
+// header('Access-Control-Max-Age: 86400');
 // Allow credentials (if needed)
 header("Access-Control-Allow-Credentials: true");
 
