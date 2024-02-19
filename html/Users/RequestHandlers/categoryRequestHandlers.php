@@ -38,8 +38,8 @@ class CategoryRequestHandlers
     $jsonData = file_get_contents('php://input');
     $decodedData = json_decode($jsonData, true);
     $keys = [
-      'category_name' => ['empty'],
-      // 'parent' => ['empty'],
+      'category_name' => ['required' , 'empty' , 'category_nameFormat'],
+
     ];
 
     $validationResult = Validator::validate($decodedData, $keys);
@@ -205,8 +205,8 @@ class CategoryRequestHandlers
         "new" => $new,
       ];
       $keys = [
-        'new' => ['empty'],
-        'previous' => ['empty']
+        'new' => ['required' , 'empty' , 'parent_categoryFormat'],
+        'previous' => ['required' , 'empty']
       ];
 
       $validationResult = Validator::validate($dataToValidate, $keys);
@@ -279,8 +279,8 @@ class CategoryRequestHandlers
         "newParent" => $decodedData["newParent"],
       ];
       $keys = [
-        'newParent' => ['empty', 'required'],
-        'previousParent' => ['empty', 'required']
+        'newParent' => ['required' , 'empty' , 'parent_categoryFormat'],
+        'previousParent' => ['required' , 'empty' , ]
       ];
 
       $validationResult = Validator::validate($dataToValidate, $keys);
@@ -355,7 +355,7 @@ class CategoryRequestHandlers
         "newChild" => $decodedData["newChild"],
       ];
       $keys = [
-        'newChild' => ['empty', 'required'],
+        'newChild' => ['empty', 'required' , 'category_nameFormat'],
         'previousChild' => ['empty', 'required']
       ];
 
