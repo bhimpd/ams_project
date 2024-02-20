@@ -114,10 +114,14 @@ class UserRequestHandlers
 
       //VALIDATION OF PROVIDED DATA
       $keys = [
-        'username' => ['empty', 'maxlength', 'format'],
-        'password' => ['required', 'empty', 'maxlength', 'minLength', 'passwordFormat'],
-        'email' => ['empty', 'email'],
-        'name' => ['empty'],
+        'username' => ['empty', 'maxLength', 'minLength', 'usernameFormat'],
+        'password' => ['required', 'empty', 'maxLength', 'minLength', 'passwordFormat'],
+        'email' => ['maxLength', 'minLength','emailFormat'],
+        'name' => ['maxLength', 'minLength'],
+        'user_type' => ['user_typeFormat'],
+        'phone_number'=>['phone_numberFormat'],
+        'designation' => ['designationFormat'],
+        
       ];
 
       $validationResult = Validator::validate($decodedData, $keys);

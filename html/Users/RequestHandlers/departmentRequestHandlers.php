@@ -40,7 +40,7 @@ class DepartmentRequestHandlers
     $decodedData = json_decode($jsonData, true);
 
     $keys = [
-      'department' => ['empty', 'required']
+      'department' => [ 'required','empty','departmentFormat']
     ];
     $validationResult = Validator::validate($decodedData, $keys);
 
@@ -159,7 +159,7 @@ class DepartmentRequestHandlers
       //validation
       $keys = [
         "previousDepartment" => ['empty', 'required'],
-        "newDepartment" => ['empty', 'required']
+        "newDepartment" => ['required','empty', 'departmentFormat']
       ];
 
       $validationResult = Validator::validate($decodedData, $keys);
@@ -231,7 +231,7 @@ class DepartmentRequestHandlers
 
       //validation
       $keys = [
-        "department" => ['empty', 'required']
+        "department" => [ 'required' ,'empty' ]
       ];
       $validationResult = Validator::validate($decodedData, $keys);
       if (!$validationResult["validate"]) {

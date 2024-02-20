@@ -41,7 +41,7 @@ class LocationRequestHandlers
     $decodedData = json_decode($jsonData, true);
 
     $keys = [
-      'location' => ['empty' , 'required']
+      'location' => [ 'required' ,'empty' , 'locationFormat']
     ];
     $validationResult = Validator::validate($decodedData, $keys);
 
@@ -156,8 +156,8 @@ class LocationRequestHandlers
      
       //validation
       $keys = [
-        "previousLocation" => ['empty', 'required'],
-        "newLocation" => ['empty' , 'required']
+        "previousLocation" => ['required' ,'empty' ],
+        "newLocation" => ['required', 'empty'  , 'locationFormat']
       ];
 
       $validationResult = Validator::validate($decodedData , $keys);
@@ -228,7 +228,7 @@ class LocationRequestHandlers
      
       //validation
       $keys = [
-        "location" => ['empty' , 'required']
+        "location" => [ 'required' , 'empty'  , ]
       ];
       $validationResult = Validator::validate($decodedData, $keys);
       if (!$validationResult["validate"]) {
