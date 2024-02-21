@@ -12,7 +12,9 @@ $pathOptions = [
                 "/logout",
                 "/login",
                 "/user" ,
-                "/repairreplace"
+                "/repairreplace",
+                "/procurement",
+                "/assets"
               ];
               
 //dyniamically creating callback names
