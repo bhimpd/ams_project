@@ -4,6 +4,7 @@ session_start();
 
 use Routes\Route;
 
+
 $path = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
 $pathOptions = [
                 "/department",
@@ -11,7 +12,10 @@ $pathOptions = [
                 "/category",
                 "/logout",
                 "/login",
-                "/user" 
+                "/user" ,
+                "/repairreplace",
+                "/procurement",
+                "/assets"
               ];
               
 //dyniamically creating callback names

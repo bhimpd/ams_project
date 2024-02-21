@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__."/../Configuration/cors.php";
-require_once __DIR__ . "/../vendor/autoload.php";
+
 
 foreach (glob(__DIR__ . '/../Routes/*.php') as $file) {
 
@@ -11,14 +11,7 @@ foreach (glob(__DIR__ . '/../Routes/*/*.php') as $file) {
 
   require_once $file;
 }
-foreach (glob(__DIR__ . '/../Routes/Category/*.php') as $file) {
 
-  require_once $file;
-}
-foreach (glob(__DIR__ . '/../Routes/Location/*.php') as $file) {
-
-  require_once $file;
-}
 foreach (glob(__DIR__ . '/../AccessControl/*.php') as $file) {
   require_once $file;
 }
