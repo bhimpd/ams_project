@@ -5,8 +5,8 @@ function customErrorHandler($errno ,$errstr, $errfile, $errline){
 
   $logPath = "/html/User/error.log";
 
-  file_put_contents($logPath ,$logMessage , FILE_APPEND);
+  // file_put_contents($logPath ,$logMessage , FILE_APPEND);
 
   return true;
 }
-set_error_handler("customErrorHandler");
+// set_error_handler("customErrorHandler");

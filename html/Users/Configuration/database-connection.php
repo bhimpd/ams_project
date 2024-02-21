@@ -1,4 +1,5 @@
 <?php
+
 namespace Configg;
 
 use Exception;
@@ -7,9 +8,9 @@ use mysqli;
 class DBConnect
 {
 
-  private $hostname ;
-  private $username ;
-  private $password ;
+  private $hostname;
+  private $username;
+  private $password;
   private $database = "ams";
 
   public $conn;
@@ -17,9 +18,9 @@ class DBConnect
   //begins connection on object instantiation
   public function __construct()
   {
-    $this->hostname = "amsdb";
-    $this->username = "sanchay";
-    $this->password = "sanchay";
+    $this->hostname = "localhost";   //"amsdb";
+    $this->username = "root";    //"sanchay";
+    $this->password = "";  //"sanchay";
     $this->connectToDatabase();
   }
 
@@ -34,7 +35,6 @@ class DBConnect
     } catch (Exception $e) {
       echo "\n" . $e->getMessage() . "\n";
     }
-
   }
 
   public function disconnectFromDatabase()
@@ -45,7 +45,6 @@ class DBConnect
       } else {
         throw new Exception("Unable to disconnect from database.");
       }
-
     } catch (Exception $e) {
       echo $e->getMessage();
     }
