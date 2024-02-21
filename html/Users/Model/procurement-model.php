@@ -91,11 +91,11 @@ class Procurement
         JOIN 
             procurements pr ON pp.procurement_id = pr.id
         JOIN 
-            users u_requested ON pr.requested_by_id = u_requested.id
+            user u_requested ON pr.requested_by_id = u_requested.id
         JOIN 
-            users u_approved ON pr.approved_by_id = u_approved.id
+            user u_approved ON pr.approved_by_id = u_approved.id
         JOIN 
-            categories c ON pp.category_id = c.id";
+            category c ON pp.category_id = c.id";
 
         if (!empty($search)) {
             $sql .= " WHERE pp.product_name LIKE '%$search%'";
@@ -177,11 +177,11 @@ class Procurement
         JOIN 
             procurements pr ON pp.procurement_id = pr.id
         JOIN 
-            users u_requested ON pr.requested_by_id = u_requested.id
+            user u_requested ON pr.requested_by_id = u_requested.id
         JOIN 
-            users u_approved ON pr.approved_by_id = u_approved.id
+            user u_approved ON pr.approved_by_id = u_approved.id
         JOIN 
-            categories c ON pp.category_id = c.id 
+            category c ON pp.category_id = c.id 
             
             WHERE pp.id='$id'";
 

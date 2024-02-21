@@ -184,7 +184,7 @@ class ProcurementRequestHandlers
             if (empty($id)) {
                 throw new Exception("Id not provided !!");
             }
-            $result = $proObj->get($id, NULL);
+            $result = $proObj->get($id);
 
             if ($result["status"] == "false") {
                 unset($result);
@@ -252,7 +252,7 @@ class ProcurementRequestHandlers
                 throw new Exception("Id not provided !!");
             }
 
-            $result = $proObj->get($id, NULL);
+            $result = $proObj->get($id);
 
             if ($result["status"] == "false") {
                 unset($result);

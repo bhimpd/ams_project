@@ -15,7 +15,7 @@ class Procurement
 
       case 'GET':
         return  self::get();
-        break;
+        
 
       case 'POST':
         self::create();

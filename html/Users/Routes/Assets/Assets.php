@@ -13,11 +13,11 @@ class Assets
         switch ($method) {
             case 'POST':
                 return self::create();
-                break;
+                
 
                 case 'GET':
                     return self::get();
-                    break;
+                    
 
             default:
                 # code...
