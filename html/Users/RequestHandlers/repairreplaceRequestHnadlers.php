@@ -64,6 +64,13 @@ class RepairreplaceRequestHandlers
       ];
     }
 
+    $repairreplaceObj = new Repairreplace(new DBConnect);
+    $jsonData = file_get_contents('php://input');
+    $decodedData = json_decode($jsonData, true);
+    $response = $repairreplaceObj -> get($decodedData["assets_id"]);
+    print_r($response);
+    die("repaiurreplace handleers"); // make ammendments in get by id 
+
     // $repairreplaceObj = new Repairreplace();
   }
 
