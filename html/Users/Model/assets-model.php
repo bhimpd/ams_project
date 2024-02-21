@@ -23,7 +23,7 @@ class Assets
     public function create($data)
     {
         if (!Assets::isJson($data)) {
-            throw new \Exception("Not json data");
+            throw new Exception("Not json data");
         } else {
             $data = json_decode($data, true);
 
@@ -67,24 +67,23 @@ class Assets
         a.status,
         a.assets_image
          FROM " . self::TABLE . " AS a
-         LEFT JOIN categories AS c ON a.category = c.id
-         LEFT JOIN users AS u ON a.assigned_to = u.id
-         LEFT JOIN locations AS l ON a.location = l.id
+         LEFT JOIN category AS c ON a.category = c.id
+         LEFT JOIN user AS u ON a.assigned_to = u.id
+         LEFT JOIN location AS l ON a.location = l.id
          WHERE a.assets_type = '$assets_type'";
 
-        //  var_dump($sql);die;
 
         $result = $this->DBconn->conn->query($sql);
 
         if (!$result) {
-            throw new \Exception("Error executing the query: " . $this->DBconn->conn->error);
+            throw new Exception("Error executing the query: " . $this->DBconn->conn->error);
         }
 
         $data = $result->fetch_all(MYSQLI_ASSOC);
         $total_rows = $result->num_rows;
 
         if ($total_rows == 0) {
-            throw new \Exception("No data found for the provided search term.");
+            throw new Exception("No data found for the provided search term.");
         }
 
         return [
@@ -97,7 +96,7 @@ class Assets
     {
 
         if (!isset($id)) {
-            throw new \Exception("id field cannot be empty");
+            throw new Exception("id field cannot be empty");
         }
 
         if (isset($id)) {
@@ -112,9 +111,9 @@ class Assets
             a.status,
             a.assets_image
              FROM " . self::TABLE . " AS a
-             LEFT JOIN categories AS c ON a.category = c.id
-             LEFT JOIN users AS u ON a.assigned_to = u.id
-             LEFT JOIN locations AS l ON a.location = l.id"
+             LEFT JOIN category AS c ON a.category = c.id
+             LEFT JOIN user AS u ON a.assigned_to = u.id
+             LEFT JOIN location AS l ON a.location = l.id"
              ." WHERE a.id='$id'";
 
             $result = $this->DBconn->conn->query($sql);
