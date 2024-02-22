@@ -38,7 +38,7 @@ class CategoryRequestHandlers
     $jsonData = file_get_contents('php://input');
     $decodedData = json_decode($jsonData, true);
     $keys = [
-      'category_name' => ['required' , 'empty' , 'category_nameFormat'],
+      'category_name' => ['required', 'empty', 'category_nameFormat'],
 
     ];
 
@@ -145,27 +145,30 @@ class CategoryRequestHandlers
     $response = $categoryObj->get($_GET["category_name"], $_GET["parent"], $_GET["id"]);
 
 
-      function buildCategoryTree(array $categories) {
-      
-        $tree = [];
-       
+    function buildCategoryTree(array $categories)
+    {
 
-        foreach ($categories as $category) {
-            $parent = $category['parent'];
-    
-            if (!isset($tree[$parent])) {
-                $tree[$parent] = [];
-            }
-    
-            $tree[$parent][] = [
-                'id' => $category['id'],
-                'category_name' => $category['category_name'],
-                // You can include other data here
-            ];
+      $tree = [];
+
+
+      foreach ($categories as $category) {
+        $parent = $category['parent'];
+
+        if (!isset($tree[$parent])) {
+          $tree[$parent] = [];
         }
-        return $tree;
+        if ($category['category_name'] == "") {
+          continue;
+        }
+        $tree[$parent][] = [
+          'id' => $category['id'],
+          'category_name' => $category['category_name'],
+
+        ];
+      }
+      return $tree;
     }
-$categoryTree = buildCategoryTree($response["data"]);
+    $categoryTree = buildCategoryTree($response["data"]);
 
 
     return [
@@ -231,8 +234,8 @@ $categoryTree = buildCategoryTree($response["data"]);
         "new" => $new,
       ];
       $keys = [
-        'new' => ['required' , 'empty' , 'parent_categoryFormat'],
-        'previous' => ['required' , 'empty']
+        'new' => ['required', 'empty', 'parent_categoryFormat'],
+        'previous' => ['required', 'empty']
       ];
 
       $validationResult = Validator::validate($dataToValidate, $keys);
@@ -305,8 +308,8 @@ $categoryTree = buildCategoryTree($response["data"]);
         "newParent" => $decodedData["newParent"],
       ];
       $keys = [
-        'newParent' => ['required' , 'empty' , 'parent_categoryFormat'],
-        'previousParent' => ['required' , 'empty' , ]
+        'newParent' => ['required', 'empty', 'parent_categoryFormat'],
+        'previousParent' => ['required', 'empty',]
       ];
 
       $validationResult = Validator::validate($dataToValidate, $keys);
@@ -381,7 +384,7 @@ $categoryTree = buildCategoryTree($response["data"]);
         "newChild" => $decodedData["newChild"],
       ];
       $keys = [
-        'newChild' => ['empty', 'required' , 'category_nameFormat'],
+        'newChild' => ['empty', 'required', 'category_nameFormat'],
         'previousChild' => ['empty', 'required']
       ];
 
