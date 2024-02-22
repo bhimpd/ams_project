@@ -19,7 +19,6 @@ class Repairreplace
     $data = json_decode($data, true);
     print_r($data);
 
-    die("create re[air");
     $sql = "
     INSERT INTO repairandreplace
     (assets_id , category_id , status , assigned_to)
@@ -30,11 +29,23 @@ class Repairreplace
 
   }
 
-  public function get(int $id = null)
+  public function get(...$options)
   {
     try {
+      print_r($options);
+      $defaultOptions = [
+        "orderby" => "Product-Code" , 
+        "defaultorder" => "DESC"
+      ];
+      $parameters = array_merge($defaultOptions , $options);
+
+      print_r($parameters);
+      die("get in repair and replace model");
+
+
       $sql = "
-      SELECT repairandreplace.id as 'Product-Code', 
+      SELECT repairandreplace.id as 'id' ,
+      repairandreplace.assets_id as 'Product-Code', 
       assets.name as 'Name' , 
       category.parent as 'Category', 
       repairandreplace.status as 'Status',
@@ -42,13 +53,14 @@ class Repairreplace
       repairandreplace.assigned_date as 'Assigned Date'
 
       FROM repairandreplace
-      JOIN assets ON repairandreplace.assets_id = assets.id
-      JOIN category ON repairandreplace.category_id = category.id
-      JOIN user ON repairandreplace.assigned_to = user.id
+      LEFT JOIN assets ON repairandreplace.assets_id = assets.id
+      LEFT JOIN category ON repairandreplace.category_id = category.id
+      LEFT JOIN user ON repairandreplace.assigned_to = user.id
     ";
+    $sql .= " ORDER BY `$parameters[orderby]` $parameters[defaultorder]";
 
-    
       $result = $this->DBconn->conn->query($sql);
+      
     
       if (!$result->num_rows > 0) {
         throw new \Exception("Cannot find data in database!!");

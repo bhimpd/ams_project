@@ -10,7 +10,8 @@ use Middleware\Authorization;
 
 class RepairreplaceRequestHandlers
 {
-  public static function get(){
+  public static function get()
+  {
     $response = Authorization::verifyToken();
     if (!$response["status"]) {
       return [
@@ -31,7 +32,9 @@ class RepairreplaceRequestHandlers
     }
 
     $repairreplaceObj = new Repairreplace(new DBConnect);
-    $response = $repairreplaceObj -> get();
+    $callingParameters = ["orderby" => "Name"];
+
+    $response = $repairreplaceObj->get($callingParameters["orderby"]);
 
     return [
       "statusCode" => 200,
@@ -67,7 +70,7 @@ class RepairreplaceRequestHandlers
     $repairreplaceObj = new Repairreplace(new DBConnect);
     $jsonData = file_get_contents('php://input');
     $decodedData = json_decode($jsonData, true);
-    $response = $repairreplaceObj -> get($decodedData["assets_id"]);
+    $response = $repairreplaceObj->get($decodedData["assets_id"]);
     print_r($response);
     die("repaiurreplace handleers"); // make ammendments in get by id 
 
