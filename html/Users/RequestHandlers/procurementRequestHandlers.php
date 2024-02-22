@@ -20,9 +20,9 @@ class ProcurementRequestHandlers
 
             //VALIDATION OF PROVIDED DATA
             $keys = [
-                'product_name' => ['empty', 'maxlength', 'format'],
-                'category_id' => ['empty'],
-                'requested_by_id' => ['empty'],
+                // 'product_name' => ['empty', 'maxlength', 'format'],
+                // 'category_id' => ['empty'],
+                // 'requested_by_id' => ['empty'],
                 'status' => ['empty'],
                 'approved_by_id' => ['empty'],
                 'brand' => [],
@@ -54,7 +54,7 @@ class ProcurementRequestHandlers
             return [
                 "status" => true,
                 "statusCode" => "201",
-                "message" => "procurement created successfully",
+                "message" => "Data inserted successfully",
                 "data" => $decodedData
             ];
         } catch (Exception $e) {
@@ -110,7 +110,7 @@ class ProcurementRequestHandlers
             $search = isset($_GET['search']) ? $_GET['search'] : '';
             $filterKey = isset($_GET['filterBy']) ? $_GET['filterBy'] : null;
             $filterValue = isset($_GET[$filterKey]) ? $_GET[$filterKey] : null;
-           
+
             $result = $proObj->getAll($search, $sortBy, $order, $filterKey, $filterValue);
 
             if (!$result) {

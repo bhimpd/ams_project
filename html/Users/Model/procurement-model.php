@@ -26,28 +26,6 @@ class Procurement
         } else {
             $data = json_decode($data, true);
 
-            $productData = [
-                'product_name' => $data['product_name'],
-                'procurement_id' => $data['procurement_id'],
-                'category_id' => $data['category_id'],
-                'brand' => $data['brand'],
-                'estimated_price' => $data['estimated_price'],
-                'link' => $data['link']
-
-            ];
-
-            $sqlProduct = "INSERT INTO procurements_products (product_name,procurement_id,category_id,brand, estimated_price, link)
-                           VALUES ('$productData[product_name]','$productData[procurement_id]','$productData[category_id]','$productData[brand]', '$productData[estimated_price]', '$productData[link]')";
-
-            $resultProduct = $this->DBconn->conn->query($sqlProduct);
-
-            if (!$resultProduct) {
-                return [
-                    "status" => false,
-                    "message" => []
-                ];
-            }
-
             $procurementData = [
                 'requested_by_id' => $data['requested_by_id'],
                 'status' => $data['status'],
@@ -67,10 +45,25 @@ class Procurement
                     "message" => []
                 ];
             }
+            $procurement_id = $this->DBconn->conn->insert_id;
 
-
-
-            return true;
+            foreach ($data['products'] as $product) {
+                $sqlProduct = "INSERT INTO procurements_products (product_name, procurement_id, category_id, brand, estimated_price, link)
+                               VALUES ('$product[product_name]', '$procurement_id', '$product[category_id]', '$product[brand]', '$product[estimated_price]', '$product[link]')";
+            
+                $resultProduct = $this->DBconn->conn->query($sqlProduct);
+            
+                if (!$resultProduct) {
+                    return [
+                        "status" => false,
+                        "message" => "Failed to insert data into procurements_products table"
+                    ];
+                }
+            }
+            return [
+                "status" => true,
+                "procurement_id" => $procurement_id,
+            ];
         }
     }
 
@@ -183,7 +176,7 @@ class Procurement
         JOIN 
             category c ON pp.category_id = c.id 
             
-            WHERE pp.id='$id'";
+            WHERE pr.id='$id'";
 
             $result = $this->DBconn->conn->query($sql);
 
@@ -193,11 +186,15 @@ class Procurement
                     "message" => "unable to fetch data of given $id"
                 ];
             } else {
-                $row = $result->fetch_assoc();
+                $rows = [];
+
+                while ($row = $result->fetch_assoc()) {
+                    $rows[] = $row;
+                }
                 return [
                     "status" => "true",
                     "message" => "given $id data",
-                    "data" => $row
+                    "data" => $rows
                 ];
             }
         }

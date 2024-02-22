@@ -46,14 +46,13 @@ class AssetsRequestHandlers
                 return [
                     "status" => false,
                     "statusCode" => "409",
-                    "status" => false,
-                    "statusCode" => "409",
                     "message" => "Unable to create assets",
                     "data" => $decodedData
                 ];
             }
             return [
                 "status" => true,
+                "message" => "Assets created successfully!",
                 "statusCode" => "201",
                 "data" => $decodedData
             ];

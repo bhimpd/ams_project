@@ -14,9 +14,7 @@ class Procurement
     switch ($_SERVER['REQUEST_METHOD']) {
 
       case 'GET':
-      
         return  self::get();
-
 
       case 'POST':
         self::create();

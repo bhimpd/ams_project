@@ -48,7 +48,6 @@ class Assets
             }
             return [
                 "status" => "true",
-                "message" => "Assets created successfully!"
             ];
         }
     }
