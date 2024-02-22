@@ -38,7 +38,7 @@ class CategoryRequestHandlers
     $jsonData = file_get_contents('php://input');
     $decodedData = json_decode($jsonData, true);
     $keys = [
-      'category_name' => ['required' , 'empty' , 'category_nameFormat'],
+      'category_name' => ['required', 'empty', 'category_nameFormat'],
 
     ];
 
@@ -70,6 +70,8 @@ class CategoryRequestHandlers
           "data" => []
         ];
       }
+
+      $parentCreation["parent"] = ucfirst($parentCreation["parent"]);
       $response = $categoryObj->create(json_encode($parentCreation));
 
 
@@ -142,11 +144,38 @@ class CategoryRequestHandlers
     $categoryObj = new Category(new DBConnect());
     $response = $categoryObj->get($_GET["category_name"], $_GET["parent"], $_GET["id"]);
 
+
+    function buildCategoryTree(array $categories)
+    {
+
+      $tree = [];
+
+
+      foreach ($categories as $category) {
+        $parent = $category['parent'];
+
+        if (!isset($tree[$parent])) {
+          $tree[$parent] = [];
+        }
+        if ($category['category_name'] == "") {
+          continue;
+        }
+        $tree[$parent][] = [
+          'id' => $category['id'],
+          'category_name' => $category['category_name'],
+
+        ];
+      }
+      return $tree;
+    }
+    $categoryTree = buildCategoryTree($response["data"]);
+
+
     return [
       "statusCode" => 200,
       "status" => $response["status"],
       "message" => $response["message"],
-      "data" => $response["data"]
+      "data" => $categoryTree
     ];
   }
   /**
@@ -205,8 +234,8 @@ class CategoryRequestHandlers
         "new" => $new,
       ];
       $keys = [
-        'new' => ['required' , 'empty' , 'parent_categoryFormat'],
-        'previous' => ['required' , 'empty']
+        'new' => ['required', 'empty', 'parent_categoryFormat'],
+        'previous' => ['required', 'empty']
       ];
 
       $validationResult = Validator::validate($dataToValidate, $keys);
@@ -279,8 +308,8 @@ class CategoryRequestHandlers
         "newParent" => $decodedData["newParent"],
       ];
       $keys = [
-        'newParent' => ['required' , 'empty' , 'parent_categoryFormat'],
-        'previousParent' => ['required' , 'empty' , ]
+        'newParent' => ['required', 'empty', 'parent_categoryFormat'],
+        'previousParent' => ['required', 'empty',]
       ];
 
       $validationResult = Validator::validate($dataToValidate, $keys);
@@ -355,7 +384,7 @@ class CategoryRequestHandlers
         "newChild" => $decodedData["newChild"],
       ];
       $keys = [
-        'newChild' => ['empty', 'required' , 'category_nameFormat'],
+        'newChild' => ['empty', 'required', 'category_nameFormat'],
         'previousChild' => ['empty', 'required']
       ];
 

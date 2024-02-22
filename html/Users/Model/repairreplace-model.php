@@ -17,30 +17,37 @@ class Repairreplace
   public function create($data)
   {
     $data = json_decode($data, true);
+    print_r($data);
+
+    die("create re[air");
     $sql = "
+    INSERT INTO repairandreplace
+    (assets_id , category_id , status , assigned_to)
+    VALUES
+    ()
     
     ";
 
   }
 
-  public function get()
+  public function get(int $id = null)
   {
     try {
       $sql = "
       SELECT repairandreplace.id as 'Product-Code', 
-      products.product_name as 'Name' , 
+      assets.name as 'Name' , 
       category.parent as 'Category', 
       repairandreplace.status as 'Status',
       user.name as 'Assigned-to',
       repairandreplace.assigned_date as 'Assigned Date'
 
       FROM repairandreplace
-      JOIN products ON repairandreplace.products_id = products.id
-      JOIN category ON products.category_id = category.id
+      JOIN assets ON repairandreplace.assets_id = assets.id
+      JOIN category ON repairandreplace.category_id = category.id
       JOIN user ON repairandreplace.assigned_to = user.id
-  
     ";
 
+    
       $result = $this->DBconn->conn->query($sql);
     
       if (!$result->num_rows > 0) {
