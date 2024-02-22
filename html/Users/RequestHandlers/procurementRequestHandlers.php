@@ -259,9 +259,9 @@ class ProcurementRequestHandlers
                 throw new Exception("Procurement not found to update!!");
             }
             $keys = [
-                'product_name' => ['empty', 'maxlength', 'format'],
-                'category_id' => ['empty'],
-                'requested_by_id' => ['empty'],
+                // 'product_name' => ['empty', 'maxlength', 'format'],
+                // 'category_id' => ['empty'],
+                // 'requested_by_id' => ['empty'],
                 'status' => ['empty'],
                 'approved_by_id' => ['empty'],
                 'brand' => [],
