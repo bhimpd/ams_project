@@ -48,11 +48,12 @@ class Procurement
             $procurement_id = $this->DBconn->conn->insert_id;
 
             foreach ($data['products'] as $product) {
+
                 $sqlProduct = "INSERT INTO procurements_products (product_name, procurement_id, category_id, brand, estimated_price, link)
                                VALUES ('$product[product_name]', '$procurement_id', '$product[category_id]', '$product[brand]', '$product[estimated_price]', '$product[link]')";
-            
+
                 $resultProduct = $this->DBconn->conn->query($sqlProduct);
-            
+
                 if (!$resultProduct) {
                     return [
                         "status" => false,
@@ -224,20 +225,20 @@ class Procurement
     }
 
     public function update(int $id, string $data): array
-{
-    if (!Procurement::isJson($data)) {
-        throw new \Exception("The data is not JSON formatted.");
-    } else {
-        $data = json_decode($data, true);
+    {
+        if (!Procurement::isJson($data)) {
+            throw new \Exception("The data is not JSON formatted.");
+        } else {
+            $data = json_decode($data, true);
 
-        $procurementData = [
-            'requested_by_id' => $data['requested_by_id'],
-            'status' => $data['status'],
-            'request_urgency' => $data['request_urgency'],
-            'approved_by_id' => $data['approved_by_id'],
-        ];
+            $procurementData = [
+                'requested_by_id' => $data['requested_by_id'],
+                'status' => ucfirst($data['status']),
+                'request_urgency' => $data['request_urgency'],
+                'approved_by_id' => $data['approved_by_id'],
+            ];
 
-        $sqlProcurement = "UPDATE procurements 
+            $sqlProcurement = "UPDATE procurements 
                             SET 
                             requested_by_id = '{$procurementData['requested_by_id']}',
                             status = '{$procurementData['status']}',
@@ -246,32 +247,34 @@ class Procurement
                             updated_at = NOW()
                             WHERE id = $id";
 
-        $resultProcurement = $this->DBconn->conn->query($sqlProcurement);
+            $resultProcurement = $this->DBconn->conn->query($sqlProcurement);
 
-        if (!$resultProcurement) {
-            throw new \Exception("Error updating procurement data");
-        }
+            if (!$resultProcurement) {
+                throw new \Exception("Error updating procurement data");
+            }
 
-        foreach ($data['products'] as $product) {
-            $sqlProduct = "UPDATE procurements_products 
+            foreach ($data['products'] as $product) {
+                $product_name = ucfirst($product['product_name']);
+                $estimated_price = number_format($product['estimated_price'], 2, '.', '');
+
+                $sqlProduct = "UPDATE procurements_products 
                             SET 
-                            product_name = '{$product['product_name']}', 
+                            product_name = '$product_name', 
                             category_id = '{$product['category_id']}', 
                             brand = '{$product['brand']}', 
-                            estimated_price = '{$product['estimated_price']}', 
+                            estimated_price = '$estimated_price', 
                             link = '{$product['link']}',  
                             updated_at = NOW()
-                            WHERE id = {$product['product_id']}"; 
-                                
-            $resultProduct = $this->DBconn->conn->query($sqlProduct);
+                            WHERE id = {$product['product_id']}";
 
-            if (!$resultProduct) {
-                throw new \Exception("Error updating product data");
+                $resultProduct = $this->DBconn->conn->query($sqlProduct);
+
+                if (!$resultProduct) {
+                    throw new \Exception("Error updating product data");
+                }
             }
-        }
 
-        return ["result" => true];
+            return ["result" => true];
+        }
     }
-}
-    
 }

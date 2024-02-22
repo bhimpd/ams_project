@@ -27,8 +27,8 @@ class Assets
         } else {
             $data = json_decode($data, true);
 
-            $name = $data['name'];
-            $assets_type = $data['assets_type'];
+            $name = ucfirst($data['name']);
+            $assets_type = ucfirst($data['assets_type']);
             $category = $data['category'];
             $sub_category = $data['sub_category'];
             $brand = $data['brand'];
@@ -37,7 +37,7 @@ class Assets
             $status = $data['status'];
             $assets_image = $data['assets_image'];
 
-
+            
             $sql = "INSERT INTO " . self::TABLE . " (name, assets_type, category, sub_category, brand, location, assigned_to, status, assets_image) 
             VALUES ('$name','$assets_type','$category','$sub_category','$brand','$location','$assigned_to','$status','$assets_image')";
 
@@ -178,8 +178,8 @@ class Assets
     {
         $data = json_decode($jsonData, true);
 
-        $name = $data['name'];
-        $assets_type = $data['assets_type'];
+        $name = ucfirst($data['name']);
+        $assets_type = ucfirst($data['assets_type']);
         $category = $data['category'];
         $sub_category = $data['sub_category'];
         $brand = $data['brand'];
