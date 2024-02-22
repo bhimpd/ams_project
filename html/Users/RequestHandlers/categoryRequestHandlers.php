@@ -208,6 +208,13 @@ class CategoryRequestHandlers
 
       $jsonData = file_get_contents("php://input");
       $decodedData = json_decode($jsonData, true);
+
+      //defining keys for validation 
+      $keys = [
+        'new' => ['required', 'empty'],
+        'previous' => ['required', 'empty']
+      ];
+
       if (isset($decodedData["previousParent"])) {
         $previous = $decodedData["previousParent"];
         $new = $decodedData["newParent"];
@@ -216,6 +223,12 @@ class CategoryRequestHandlers
         }
         $result = $categoryModelObj->get(NULL, $previous);
 
+        $ifnewalreadyexists =  $categoryModelObj->get($new ,NULL);
+       
+        //adding key for newparent name validation
+        $keys['new'][] = 'parent_categoryFormat';
+       
+
       } else if (isset($decodedData["previouscategory_name"])) {
         $previous = $decodedData["previouscategory_name"];
         $new = $decodedData["newcategory_name"];
@@ -223,20 +236,26 @@ class CategoryRequestHandlers
           throw new Exception("Previous parent/category value not provided!!");
         }
         $result = $categoryModelObj->get($previous, NULL);
-      }
+        $ifnewalreadyexists =  $categoryModelObj->get(NULL , $new);
 
+      //adding key for newcategory name validation
+
+        $keys['new'][] = 'category_nameFormat';
+        
+      }
+     
       if ($result["status"] == "false") {
-        throw new Exception("Previous value not found in database!!");
+        throw new Exception("Previous value proviedd is not found in database!!");
+      }
+      if($ifnewalreadyexists["status"]== "false"){
+        throw new Exception("New value provided already exists in database !!");
       }
       //validation
       $dataToValidate = [
         "previous" => $previous,
         "new" => $new,
       ];
-      $keys = [
-        'new' => ['required', 'empty', 'parent_categoryFormat'],
-        'previous' => ['required', 'empty']
-      ];
+     
 
       $validationResult = Validator::validate($dataToValidate, $keys);
       if (!$validationResult["validate"]) {
@@ -251,7 +270,7 @@ class CategoryRequestHandlers
          $response = $categoryModelObj->update( $decodedData);
 
       if (!$response["status"]) {
-        throw new Exception("Unalbe to update in database!!");
+        throw new Exception("Unable to update in database!!");
       }
       return [
         "status" => $response["status"],
@@ -266,158 +285,7 @@ class CategoryRequestHandlers
       ];
     }
   }
-  public static function updateParent(): array
-  {
-    try {
-      //Authorizaiton
-      $response = Authorization::verifyToken();
-      if (!$response["status"]) {
-        return [
-          "status" => $response["status"],
-          "statusCode" => 401,
-          "message" => $response["message"],
-          "data" => $response["data"]
-        ];
-      }
-      //checks if user is not admin
-      if ($response["data"]["user_type"] !== "admin") {
-        return [
-          "status" => false,
-          "statusCode" => 401,
-          "message" => "User unauthorised",
-          "data" => $response["data"]
-        ];
-      }
-      $categoryModelObj = new Category(new DBConnect());
-
-      $jsonData = file_get_contents("php://input");
-      $decodedData = json_decode($jsonData, true);
-      $previousParent = $_GET["previousParent"];
-      if (empty($previousParent)) {
-        throw new Exception("Previous parent not provided!!");
-      }
-      $result = $categoryModelObj->get(NULL, $previousParent);
-
-      if ($result["status"] == "false") {
-        throw new Exception("Parent category not found in database!!");
-      }
-
-      //validation
-      $dataToValidate = [
-        "previousParent" => $previousParent,
-        "newParent" => $decodedData["newParent"],
-      ];
-      $keys = [
-        'newParent' => ['required', 'empty', 'parent_categoryFormat'],
-        'previousParent' => ['required', 'empty',]
-      ];
-
-      $validationResult = Validator::validate($dataToValidate, $keys);
-      if (!$validationResult["validate"]) {
-        $response = array(
-          "status" => "false",
-          "statusCode" => "409",
-          "message" => $validationResult,
-          "data" => $dataToValidate
-        );
-        return $response;
-      }
-
-      $response = $categoryModelObj->updateParent($_GET["previousParent"], $decodedData["newParent"]);
-
-      if (!$response["status"]) {
-        throw new Exception("Unalbe to update in database!!");
-      }
-      return [
-        "status" => $response["status"],
-        "statusCode" => 200,
-        "message" => $response["message"]
-      ];
-
-    } catch (Exception $e) {
-      return [
-        "status" => "false",
-        "message" => $e->getMessage()
-      ];
-    }
-  }
-
-  public static function updateChild()
-  {
-    try {
-      //Authorizaiton
-      $response = Authorization::verifyToken();
-      if (!$response["status"]) {
-        return [
-          "status" => $response["status"],
-          "statusCode" => 401,
-          "message" => $response["message"],
-          "data" => $response["data"]
-        ];
-      }
-      //checks if user is not admin
-      if ($response["data"]["user_type"] !== "admin") {
-        return [
-          "status" => false,
-          "statusCode" => 401,
-          "message" => "User unauthorised",
-          "data" => $response["data"]
-        ];
-      }
-      $categoryModelObj = new Category(new DBConnect());
-
-      $jsonData = file_get_contents("php://input");
-      $decodedData = json_decode($jsonData, true);
-      $previousChild = $_GET["previousChild"];
-      if (empty($previousChild)) {
-        throw new Exception("Previous child not provided!!");
-      }
-      $result = $categoryModelObj->get($previousChild, NULL);
-
-      if ($result["status"] == "false") {
-        throw new Exception("Child category not found in database to update!!");
-      }
-
-      //validation
-      $dataToValidate = [
-        "previousChild" => $previousChild,
-        "newChild" => $decodedData["newChild"],
-      ];
-      $keys = [
-        'newChild' => ['empty', 'required', 'category_nameFormat'],
-        'previousChild' => ['empty', 'required']
-      ];
-
-      $validationResult = Validator::validate($dataToValidate, $keys);
-      if (!$validationResult["validate"]) {
-        $response = array(
-          "status" => "false",
-          "statusCode" => "409",
-          "message" => $validationResult,
-          "data" => $dataToValidate
-        );
-        return $response;
-      }
-
-      $response = $categoryModelObj->updateCategory($previousChild, $decodedData["newChild"]);
-
-      if (!$response["status"]) {
-        throw new Exception("Unalbe to update in database!!");
-      }
-      return [
-        "status" => $response["status"],
-        "statusCode" => 200,
-        "message" => $response["message"]
-      ];
-
-    } catch (Exception $e) {
-      return [
-        "status" => "false",
-        "message" => $e->getMessage(),
-        "statusCode" => 500
-      ];
-    }
-  }
+  
 
   public static function deleteChild()
   {
