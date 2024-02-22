@@ -70,6 +70,8 @@ class CategoryRequestHandlers
           "data" => []
         ];
       }
+
+      $parentCreation["parent"] = ucfirst($parentCreation["parent"]);
       $response = $categoryObj->create(json_encode($parentCreation));
 
 
@@ -142,11 +144,35 @@ class CategoryRequestHandlers
     $categoryObj = new Category(new DBConnect());
     $response = $categoryObj->get($_GET["category_name"], $_GET["parent"], $_GET["id"]);
 
+
+      function buildCategoryTree(array $categories) {
+      
+        $tree = [];
+       
+
+        foreach ($categories as $category) {
+            $parent = $category['parent'];
+    
+            if (!isset($tree[$parent])) {
+                $tree[$parent] = [];
+            }
+    
+            $tree[$parent][] = [
+                'id' => $category['id'],
+                'category_name' => $category['category_name'],
+                // You can include other data here
+            ];
+        }
+        return $tree;
+    }
+$categoryTree = buildCategoryTree($response["data"]);
+
+
     return [
       "statusCode" => 200,
       "status" => $response["status"],
       "message" => $response["message"],
-      "data" => $response["data"]
+      "data" => $categoryTree
     ];
   }
   /**
