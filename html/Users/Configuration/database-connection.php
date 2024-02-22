@@ -11,7 +11,7 @@ class DBConnect
   private $hostname;
   private $username;
   private $password;
-  private $database = "ams";
+  private $database = "mainams";
 
   public $conn;
 
