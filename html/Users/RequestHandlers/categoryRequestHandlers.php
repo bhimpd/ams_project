@@ -148,29 +148,40 @@ class CategoryRequestHandlers
     function buildCategoryTree(array $categories)
     {
 
-      $tree = [];
-
-
-      foreach ($categories as $category) {
-        $parent = $category['parent'];
-
-        if (!isset($tree[$parent])) {
-          $tree[$parent] = [];
-        }
-        if ($category['category_name'] == "") {
-          continue;
-        }
-        $tree[$parent][] = [
-          'id' => $category['id'],
-          'category_name' => $category['category_name'],
-
-        ];
+      $result = [];
+    
+      foreach ($categories as $item) {
+          // Skip if category_name is empty
+          if (empty($item['category_name'])) {
+              continue;
+          }
+          
+          $parentName = $item['parent'];
+          $categoryName = $item['category_name'];
+          $categoryId = $item['id'];
+          
+          // If parent category doesn't exist in $result, initialize it
+          if (!isset($result[$parentName])) {
+              $result[$parentName] = [
+                  "parentName" => $parentName,
+                  "subCategory" => []
+              ];
+          }
+          
+          // Add sub-category to the parent category
+          $result[$parentName]["subCategory"][] = [
+              "id" => $categoryId,
+              "name" => $categoryName
+          ];
       }
-      return $tree;
+      
+      // Convert associative array to indexed array
+      $result = array_values($result);
+      
+      return ["category" => $result];
     }
     $categoryTree = buildCategoryTree($response["data"]);
-
-
+  
     return [
       "statusCode" => 200,
       "status" => $response["status"],
