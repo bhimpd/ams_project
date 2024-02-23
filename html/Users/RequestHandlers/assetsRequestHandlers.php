@@ -16,52 +16,81 @@ class AssetsRequestHandlers
     {
         try {
             $assetsObj = new Assets(new DBConnect());
-            $jsonData = file_get_contents('php://input');
-            $decodedData = json_decode($jsonData, true);
+            // $jsonData = file_get_contents('php://input');
+            // $decodedData = json_decode($jsonData, true);
+
+            $name = ucfirst($_POST['name']);  
+        $assets_type = ucfirst($_POST['assets_type']);
+        $category = $_POST['category'];
+        $sub_category = $_POST['sub_category'];
+        $brand = $_POST['brand'];
+        $location = $_POST['location'];
+        $assigned_to = $_POST['assigned_to'];
+        $status = $_POST['status'];
+        $image = $_FILES['assets_image'];
+        if ($image['error'] !== UPLOAD_ERR_OK) {
+            throw new Exception("Failed to upload image");
+        }
+        $imageName = uniqid() . '_' . $image['name'];
+        $uploadDirectory = 'assets-images/';
+        $uploadedFilePath = $uploadDirectory . $imageName;
+        if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
+            throw new Exception("Failed to move uploaded file");
+        }
+        $data = [
+            'name' => $name,
+            'assets_type' => $assets_type,
+            'category' => $category,
+            'sub_category' => $sub_category,
+            'brand' => $brand,
+            'location' => $location,
+            'assigned_to' => $assigned_to,
+            'status' => $status,
+            'image_name' => $imageName
+        ];
 
             $keys = [
-                'name' => ['empty'],
-                'assets_type' => ['empty'],
-                'category' => ['empty'],
-                'sub_category' => [],
-                'brand' => [],
-                'location' => ['empty', 'maxlength'],
-                'assigned_to' => ['empty'],
-                'status' => [],
-                'assets_image' => []
+                // 'name' => ['empty'],
+                // 'assets_type' => ['empty'],
+                // 'category' => ['empty'],
+                // 'sub_category' => [],
+                // 'brand' => [],
+                // 'location' => ['empty', 'maxlength'],
+                // 'assigned_to' => ['empty'],
+                // 'status' => [],
+                // 'assets_image' => []
             ];
 
-            $validationResult = Validator::validate($decodedData, $keys);
+            // $validationResult = Validator::validate($decodedData, $keys);
 
-            if (!$validationResult["validate"]) {
-                return [
-                    "status" => false,
-                    "statusCode" => "422",
-                    "message" => $validationResult
-                ];
-            }
-            $result = $assetsObj->create($jsonData);
+            // if (!$validationResult["validate"]) {
+            //     return [
+            //         "status" => false,
+            //         "statusCode" => "422",
+            //         "message" => $validationResult
+            //     ];
+            // }
+            $result = $assetsObj->create($data);
 
             if (!$result) {
                 return [
                     "status" => false,
                     "statusCode" => "409",
                     "message" => "Unable to create assets",
-                    "data" => $decodedData
                 ];
             }
             return [
                 "status" => true,
                 "message" => "Assets created successfully!",
                 "statusCode" => "201",
-                "data" => $decodedData
+                "data" => $data
             ];
         } catch (\Exception $e) {
             return [
                 "status" => false,
                 "statusCode" => "409",
                 "message" => $e->getMessage(),
-                "data" => $decodedData
+                "data" => $data
             ];
         }
     }
@@ -104,10 +133,24 @@ class AssetsRequestHandlers
             $search = isset($_GET['search']) ? $_GET['search'] : '';
             $sortBy = isset($_GET['sortBy']) ? $_GET['sortBy'] : 'id';
             $order = isset($_GET['order']) ? $_GET['order'] : 'ASC';
-            $filterBy = isset($_GET['filterBy']) ? $_GET['filterBy'] : '';
-            $filterValue = isset($_GET[$filterBy]) ? $_GET[$filterBy] : '';
+            // $filterBy = isset($_GET['filterBy']) ? $_GET['filterBy'] : '';
+            // $filterValue = isset($_GET[$filterBy]) ? $_GET[$filterBy] : '';
 
-            $result = $assetsObj->getAll($assets_type, $search, $sortBy, $order, $filterBy, $filterValue);
+             // Define an array for filters
+        $filters = [];
+
+        // Check for individual parameters
+        if (isset($_GET['category'])) {
+            $filters['category'] = $_GET['category'];
+        }
+        if (isset($_GET['status'])) {
+            $filters['status'] = $_GET['status'];
+        }
+        if (isset($_GET['approved_date'])) {
+            $filters['approved_date'] = $_GET['approved_date'];
+        }
+
+        $result = $assetsObj->getAll($assets_type, $search, $sortBy, $order, $filters);
 
             if (!$result) {
                 throw new Exception("Cannot get data !!");

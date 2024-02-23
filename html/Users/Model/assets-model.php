@@ -22,37 +22,86 @@ class Assets
     }
     public function create($data)
     {
-        if (!Assets::isJson($data)) {
-            throw new Exception("Not json data");
-        } else {
-            $data = json_decode($data, true);
+    //     if (!Assets::isJson($data)) {
+    //         throw new Exception("Not json data");
+    //     } else {
+    //         $data = json_decode($data, true);
 
-            $name = ucfirst($data['name']);
-            $assets_type = ucfirst($data['assets_type']);
-            $category = $data['category'];
-            $sub_category = $data['sub_category'];
-            $brand = $data['brand'];
-            $location = $data['location'];
-            $assigned_to = $data['assigned_to'];
-            $status = $data['status'];
-            $assets_image = $data['assets_image'];
+    //         $name = ucfirst($_POST['name']);  
+    //         $assets_type = ucfirst($_POST['assets_type']);
+    //         $category = $_POST['category'];
+    //         // $name = ucfirst($data['name']);
+    //         // $assets_type = ucfirst($data['assets_type']);
+    //         // $category = $data['category'];
+    //         $sub_category = $_POST['sub_category'];
+    //         $brand = $_POST['brand'];
+    //         $location = $_POST['location'];
+    //         $assigned_to = $_POST['assigned_to'];
+    //         $status = $_POST['status'];
+    //         $image = $_FILES['assets_image'];
 
+    //         // $image_name = $data['image_name'];
+
+    //          // Check if image file is uploaded successfully
+    //     if ($image['error'] !== UPLOAD_ERR_OK) {
+    //         throw new Exception("Failed to upload image");
+    //     }
+
+    //     // Generate a unique name for the image file
+    //     $imageName = uniqid() . '_' . $image['name'];
+
+    //     // Define the directory to save the image file
+    //     $uploadDirectory = 'assets-images/';
+
+    //     // Move the uploaded image file to the designated directory
+    //     $uploadedFilePath = $uploadDirectory . $imageName;
+    //     if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
+    //         throw new Exception("Failed to move uploaded file");
+    //     }
             
-            $sql = "INSERT INTO " . self::TABLE . " (name, assets_type, category, sub_category, brand, location, assigned_to, status, assets_image) 
-            VALUES ('$name','$assets_type','$category','$sub_category','$brand','$location','$assigned_to','$status','$assets_image')";
+    //         $sql = "INSERT INTO " . self::TABLE . " (name, assets_type, category, sub_category, brand, location, assigned_to, status, image_name) 
+    //         VALUES ('$name','$assets_type','$category','$sub_category','$brand','$location','$assigned_to','$status','$imageName')";
 
-            $result = $this->DBconn->conn->query($sql);
+    //         $result = $this->DBconn->conn->query($sql);
 
-            if (!$result) {
-                throw new Exception("Could not insert into database!!");
-            }
-            return [
-                "status" => "true",
-            ];
-        }
+    //         if (!$result) {
+    //             throw new Exception("Could not insert into database!!");
+    //         }
+    //         return [
+    //             "status" => "true",
+    //         ];
+    //     }
+
+    if (!is_array($data)) {
+        throw new Exception("Invalid data format. Data must be an array.");
     }
 
-    public function getAll($assets_type, $search, $sortBy = 'id', $order = 'ASC', $filterBy = '', $filterValue = '')
+    // Extract data from the array
+    $name = ucfirst($data['name']);
+    $assets_type = ucfirst($data['assets_type']);
+    $category = $data['category'];
+    $sub_category = $data['sub_category'];
+    $brand = $data['brand'];
+    $location = $data['location'];
+    $assigned_to = $data['assigned_to'];
+    $status = $data['status'];
+    $image_name = $data['image_name'];
+
+    // Prepare the SQL query
+    $sql = "INSERT INTO " . self::TABLE . " (name, assets_type, category, sub_category, brand, location, assigned_to, status, image_name) 
+            VALUES ('$name', '$assets_type', '$category', '$sub_category', '$brand', '$location', '$assigned_to', '$status', '$image_name')";
+
+    // Execute the SQL query
+    $result = $this->DBconn->conn->query($sql);
+
+    if (!$result) {
+        throw new Exception("Could not insert into database. Error: " . $this->DBconn->conn->error);
+    }
+
+    return true;
+    }
+
+    public function getAll($assets_type, $search, $sortBy, $order, $filters)
     {
         $sql = "SELECT 
             a.id,
@@ -63,7 +112,7 @@ class Assets
             l.location AS location,
             u.name AS assigned_to_name,
             a.status,
-            a.assets_image
+            a.image_name
         FROM " . self::TABLE . " AS a
         LEFT JOIN category AS c ON a.category = c.id
         LEFT JOIN user AS u ON a.assigned_to = u.id
@@ -74,16 +123,16 @@ class Assets
             $sql .= " AND a.name LIKE '%$search%'";
         }
 
-        if (!empty($filterBy) && !empty($filterValue)) {
-            switch ($filterBy) {
+        foreach ($filters as $key => $value) {
+            switch ($key) {
                 case 'category':
-                    $sql .= " AND c.category_name = '$filterValue'";
+                    $sql .= " AND c.category_name = '$value'";
                     break;
                 case 'status':
-                    $sql .= " AND a.status = '$filterValue'";
+                    $sql .= " AND a.status = '$value'";
                     break;
-                case 'created_at':
-                    $sql .= " AND DATE(a.created_at) = DATE('$filterValue')";
+                case 'approved_date':
+                    $sql .= " AND DATE(a.approved_date) = '$value'";
                     break;
                 default:
                     // Handle invalid filter key
@@ -129,7 +178,7 @@ class Assets
             l.location AS location,
             u.name AS assigned_to_name,
             a.status,
-            a.assets_image
+            a.image_name
              FROM " . self::TABLE . " AS a
              LEFT JOIN category AS c ON a.category = c.id
              LEFT JOIN user AS u ON a.assigned_to = u.id
@@ -186,7 +235,7 @@ class Assets
         $location = $data['location'];
         $assigned_to = $data['assigned_to'];
         $status = $data['status'];
-        $assets_image = $data['assets_image'];
+        $image_name = $data['image_name'];
 
         $sql = "UPDATE " . self::TABLE . " 
             SET 
@@ -198,7 +247,7 @@ class Assets
                 location = '$location',
                 assigned_to = '$assigned_to',
                 status = '$status',
-                assets_image = '$assets_image',
+                image_name = '$image_name',
                 updated_at = NOW()
             WHERE id = $id";
 

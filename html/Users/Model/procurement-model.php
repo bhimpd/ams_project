@@ -49,8 +49,10 @@ class Procurement
 
             foreach ($data['products'] as $product) {
 
+                $product_name = ucfirst($product['product_name']);
+                $estimated_price = number_format($product['estimated_price'], 2, '.', '');
                 $sqlProduct = "INSERT INTO procurements_products (product_name, procurement_id, category_id, brand, estimated_price, link)
-                               VALUES ('$product[product_name]', '$procurement_id', '$product[category_id]', '$product[brand]', '$product[estimated_price]', '$product[link]')";
+                               VALUES ('$product_name, '$procurement_id', '$product[category_id]', '$product[brand]', '$estimated_price', '$product[link]')";
 
                 $resultProduct = $this->DBconn->conn->query($sqlProduct);
 
