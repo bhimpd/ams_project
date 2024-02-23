@@ -28,12 +28,14 @@ class AssetsRequestHandlers
         $assigned_to = $_POST['assigned_to'];
         $status = $_POST['status'];
         $image = $_FILES['assets_image'];
+
         if ($image['error'] !== UPLOAD_ERR_OK) {
             throw new Exception("Failed to upload image");
         }
         $imageName = uniqid() . '_' . $image['name'];
         $uploadDirectory = 'assets-images/';
         $uploadedFilePath = $uploadDirectory . $imageName;
+        
         if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
             throw new Exception("Failed to move uploaded file");
         }
@@ -146,8 +148,8 @@ class AssetsRequestHandlers
         if (isset($_GET['status'])) {
             $filters['status'] = $_GET['status'];
         }
-        if (isset($_GET['approved_date'])) {
-            $filters['approved_date'] = $_GET['approved_date'];
+        if (isset($_GET['assigned_date'])) {
+            $filters['assigned_date'] = $_GET['assigned_date'];
         }
 
         $result = $assetsObj->getAll($assets_type, $search, $sortBy, $order, $filters);

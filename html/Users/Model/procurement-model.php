@@ -70,7 +70,7 @@ class Procurement
         }
     }
 
-    public function getAll($search, $sortBy, $order, $filterKey, $filterValue)
+    public function getAll($search, $sortBy, $order, $filters)
     {
         $sql = "SELECT pr.id, 
         pp.id AS procurement_id,
@@ -95,36 +95,26 @@ class Procurement
             category c ON pp.category_id = c.id";
 
         if (!empty($search)) {
-            $sql .= " WHERE pp.product_name LIKE '%$search%'";
+            $sql .= " AND pp.product_name LIKE '%$search%'";
         }
 
-        if (!empty($filterKey) && !empty($filterValue)) {
-            if (!in_array($filterKey, ['category', 'status', 'approved_date'])) {
-                throw new \Exception("Invalid filter key.");
-            }
-
-            if ($filterKey === 'approved_date') {
-                $filterValue = date('Y-m-d', strtotime($filterValue));
-            }
-
-            if (!empty($search)) {
-                $sql .= " AND ";
-            } else {
-                $sql .= " WHERE ";
-            }
-
-            switch ($filterKey) {
+        foreach ($filters as $key => $value) {
+            switch ($key) {
                 case 'category':
-                    $sql .= "c.category_name = '$filterValue'";
+                    $sql .= " AND c.category_name = '$value'";
                     break;
                 case 'status':
-                    $sql .= "pr.status = '$filterValue'";
+                    $sql .= " AND pr.status = '$value'";
                     break;
                 case 'approved_date':
-                    $sql .= "pr.approved_date = DATE('$filterValue')";
+                    $sql .= " AND DATE(pr.approved_date) = '$value'";
                     break;
+                default:
+                    // Handle invalid filter key
+                    throw new \Exception("Invalid filter key.");
             }
         }
+
 
 
         $sql .= " ORDER BY pp.$sortBy $order";

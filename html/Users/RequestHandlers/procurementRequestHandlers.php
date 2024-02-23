@@ -108,10 +108,22 @@ class ProcurementRequestHandlers
             $sortBy = isset($_GET['sortBy']) ? $_GET['sortBy'] : 'id';
             $order = isset($_GET['order']) ? strtoupper($_GET['order']) : 'ASC';
             $search = isset($_GET['search']) ? $_GET['search'] : '';
-            $filterKey = isset($_GET['filterBy']) ? $_GET['filterBy'] : null;
-            $filterValue = isset($_GET[$filterKey]) ? $_GET[$filterKey] : null;
+            // $filterKey = isset($_GET['filterBy']) ? $_GET['filterBy'] : null;
+            // $filterValue = isset($_GET[$filterKey]) ? $_GET[$filterKey] : null;
+            $filters = [];
 
-            $result = $proObj->getAll($search, $sortBy, $order, $filterKey, $filterValue);
+        // Check for individual parameters
+        if (isset($_GET['category'])) {
+            $filters['category'] = $_GET['category'];
+        }
+        if (isset($_GET['status'])) {
+            $filters['status'] = $_GET['status'];
+        }
+        if (isset($_GET['approved_date'])) {
+            $filters['approved_date'] = $_GET['approved_date'];
+        }
+
+            $result = $proObj->getAll($search, $sortBy, $order, $filters);
 
             if (!$result) {
                 throw new Exception("Cannot get data !!");
