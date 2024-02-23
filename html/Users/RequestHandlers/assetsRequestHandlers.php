@@ -16,63 +16,71 @@ class AssetsRequestHandlers
     {
         try {
             $assetsObj = new Assets(new DBConnect());
-            // $jsonData = file_get_contents('php://input');
-            // $decodedData = json_decode($jsonData, true);
 
-            $name = ucfirst($_POST['name']);  
-        $assets_type = ucfirst($_POST['assets_type']);
-        $category = $_POST['category'];
-        $sub_category = $_POST['sub_category'];
-        $brand = $_POST['brand'];
-        $location = $_POST['location'];
-        $assigned_to = $_POST['assigned_to'];
-        $status = $_POST['status'];
-        $image = $_FILES['assets_image'];
+            if (isset($_FILES['assets_image'])) {
+                $image = $_FILES['assets_image'];
 
-        if ($image['error'] !== UPLOAD_ERR_OK) {
-            throw new Exception("Failed to upload image");
-        }
-        $imageName = uniqid() . '_' . $image['name'];
-        $uploadDirectory = 'assets-images/';
-        $uploadedFilePath = $uploadDirectory . $imageName;
-        
-        if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
-            throw new Exception("Failed to move uploaded file");
-        }
-        $data = [
-            'name' => $name,
-            'assets_type' => $assets_type,
-            'category' => $category,
-            'sub_category' => $sub_category,
-            'brand' => $brand,
-            'location' => $location,
-            'assigned_to' => $assigned_to,
-            'status' => $status,
-            'image_name' => $imageName
-        ];
+                if ($image['error'] !== UPLOAD_ERR_OK) {
+                    throw new Exception("Failed to upload image");
+                }
 
-            $keys = [
-                // 'name' => ['empty'],
-                // 'assets_type' => ['empty'],
-                // 'category' => ['empty'],
-                // 'sub_category' => [],
-                // 'brand' => [],
-                // 'location' => ['empty', 'maxlength'],
-                // 'assigned_to' => ['empty'],
-                // 'status' => [],
-                // 'assets_image' => []
+                $imageName = uniqid() . '_' . $image['name'];
+                $uploadDirectory = $_SERVER['DOCUMENT_ROOT'] . '/Users/uploaded_images/';
+                $uploadedFilePath = $uploadDirectory . $imageName;
+
+                $decodedData['image_name'] = $imageName;
+
+                if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
+                    throw new Exception("Failed to move uploaded file");
+                }
+            } else {
+                throw new Exception("No image file uploaded");
+            }
+
+            // Get other form-data parameters
+            $name = isset($_POST['name']) ? $_POST['name'] : '';
+            $assetsType = isset($_POST['assets_type']) ? $_POST['assets_type'] : '';
+            $category = isset($_POST['category']) ? $_POST['category'] : '';
+            $subCategory = isset($_POST['sub_category']) ? $_POST['sub_category'] : '';
+            $brand = isset($_POST['brand']) ? $_POST['brand'] : '';
+            $location = isset($_POST['location']) ? $_POST['location'] : '';
+            $assignedTo = isset($_POST['assigned_to']) ? $_POST['assigned_to'] : '';
+            $status = isset($_POST['status']) ? $_POST['status'] : '';
+
+            $decodedData = [
+                'name' => $name,
+                'assets_type' => $assetsType,
+                'category' => $category,
+                'sub_category' => $subCategory,
+                'brand' => $brand,
+                'location' => $location,
+                'assigned_to' => $assignedTo,
+                'status' => $status,
+                'image_name' => $imageName, 
             ];
 
-            // $validationResult = Validator::validate($decodedData, $keys);
 
-            // if (!$validationResult["validate"]) {
-            //     return [
-            //         "status" => false,
-            //         "statusCode" => "422",
-            //         "message" => $validationResult
-            //     ];
-            // }
-            $result = $assetsObj->create($data);
+            $keys = [
+                'name' => ['empty'],
+                'assets_type' => ['empty'],
+                'category' => ['empty'],
+                'sub_category' => [],
+                'brand' => [],
+                'location' => ['empty', 'maxlength'],
+                'assigned_to' => ['empty'],
+                'status' => [],
+            ];
+
+            $validationResult = Validator::validate($decodedData, $keys);
+
+            if (!$validationResult["validate"]) {
+                return [
+                    "status" => false,
+                    "statusCode" => "422",
+                    "message" => $validationResult
+                ];
+            }
+            $result = $assetsObj->create($decodedData);
 
             if (!$result) {
                 return [
@@ -85,14 +93,14 @@ class AssetsRequestHandlers
                 "status" => true,
                 "message" => "Assets created successfully!",
                 "statusCode" => "201",
-                "data" => $data
+                "data" => $decodedData
             ];
         } catch (\Exception $e) {
             return [
                 "status" => false,
                 "statusCode" => "409",
                 "message" => $e->getMessage(),
-                "data" => $data
+                "data" => $decodedData
             ];
         }
     }
@@ -135,24 +143,20 @@ class AssetsRequestHandlers
             $search = isset($_GET['search']) ? $_GET['search'] : '';
             $sortBy = isset($_GET['sortBy']) ? $_GET['sortBy'] : 'id';
             $order = isset($_GET['order']) ? $_GET['order'] : 'ASC';
-            // $filterBy = isset($_GET['filterBy']) ? $_GET['filterBy'] : '';
-            // $filterValue = isset($_GET[$filterBy]) ? $_GET[$filterBy] : '';
 
-             // Define an array for filters
-        $filters = [];
+            $filters = [];
 
-        // Check for individual parameters
-        if (isset($_GET['category'])) {
-            $filters['category'] = $_GET['category'];
-        }
-        if (isset($_GET['status'])) {
-            $filters['status'] = $_GET['status'];
-        }
-        if (isset($_GET['assigned_date'])) {
-            $filters['assigned_date'] = $_GET['assigned_date'];
-        }
+            if (isset($_GET['category'])) {
+                $filters['category'] = $_GET['category'];
+            }
+            if (isset($_GET['status'])) {
+                $filters['status'] = $_GET['status'];
+            }
+            if (isset($_GET['assigned_date'])) {
+                $filters['assigned_date'] = $_GET['assigned_date'];
+            }
 
-        $result = $assetsObj->getAll($assets_type, $search, $sortBy, $order, $filters);
+            $result = $assetsObj->getAll($assets_type, $search, $sortBy, $order, $filters);
 
             if (!$result) {
                 throw new Exception("Cannot get data !!");

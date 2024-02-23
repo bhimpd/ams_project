@@ -20,85 +20,36 @@ class Assets
         json_decode($jsonData);
         return (json_last_error() == JSON_ERROR_NONE);
     }
+
     public function create($data)
     {
-    //     if (!Assets::isJson($data)) {
-    //         throw new Exception("Not json data");
-    //     } else {
-    //         $data = json_decode($data, true);
+        
+            if (!is_array($data)) {
+                throw new Exception("Invalid data format. Data must be an array.");
+            }
 
-    //         $name = ucfirst($_POST['name']);  
-    //         $assets_type = ucfirst($_POST['assets_type']);
-    //         $category = $_POST['category'];
-    //         // $name = ucfirst($data['name']);
-    //         // $assets_type = ucfirst($data['assets_type']);
-    //         // $category = $data['category'];
-    //         $sub_category = $_POST['sub_category'];
-    //         $brand = $_POST['brand'];
-    //         $location = $_POST['location'];
-    //         $assigned_to = $_POST['assigned_to'];
-    //         $status = $_POST['status'];
-    //         $image = $_FILES['assets_image'];
+            $name = ucfirst($data['name']);
+            $assets_type = ucfirst($data['assets_type']);
+            $category = $data['category'];
+            $sub_category = $data['sub_category'];
+            $brand = $data['brand'];
+            $location = $data['location'];
+            $assigned_to = $data['assigned_to'];
+            $status = $data['status'];
+            $image_name = $data['image_name'];
 
-    //         // $image_name = $data['image_name'];
-
-    //          // Check if image file is uploaded successfully
-    //     if ($image['error'] !== UPLOAD_ERR_OK) {
-    //         throw new Exception("Failed to upload image");
-    //     }
-
-    //     // Generate a unique name for the image file
-    //     $imageName = uniqid() . '_' . $image['name'];
-
-    //     // Define the directory to save the image file
-    //     $uploadDirectory = 'assets-images/';
-
-    //     // Move the uploaded image file to the designated directory
-    //     $uploadedFilePath = $uploadDirectory . $imageName;
-    //     if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
-    //         throw new Exception("Failed to move uploaded file");
-    //     }
-            
-    //         $sql = "INSERT INTO " . self::TABLE . " (name, assets_type, category, sub_category, brand, location, assigned_to, status, image_name) 
-    //         VALUES ('$name','$assets_type','$category','$sub_category','$brand','$location','$assigned_to','$status','$imageName')";
-
-    //         $result = $this->DBconn->conn->query($sql);
-
-    //         if (!$result) {
-    //             throw new Exception("Could not insert into database!!");
-    //         }
-    //         return [
-    //             "status" => "true",
-    //         ];
-    //     }
-
-    if (!is_array($data)) {
-        throw new Exception("Invalid data format. Data must be an array.");
-    }
-
-    // Extract data from the array
-    $name = ucfirst($data['name']);
-    $assets_type = ucfirst($data['assets_type']);
-    $category = $data['category'];
-    $sub_category = $data['sub_category'];
-    $brand = $data['brand'];
-    $location = $data['location'];
-    $assigned_to = $data['assigned_to'];
-    $status = $data['status'];
-    $image_name = $data['image_name'];
-
-    // Prepare the SQL query
-    $sql = "INSERT INTO " . self::TABLE . " (name, assets_type, category, sub_category, brand, location, assigned_to, status, image_name) 
+            // Prepare the SQL query
+            $sql = "INSERT INTO " . self::TABLE . " (name, assets_type, category, sub_category, brand, location, assigned_to, status, image_name) 
             VALUES ('$name', '$assets_type', '$category', '$sub_category', '$brand', '$location', '$assigned_to', '$status', '$image_name')";
 
-    // Execute the SQL query
-    $result = $this->DBconn->conn->query($sql);
+            // Execute the SQL query
+            $result = $this->DBconn->conn->query($sql);
 
-    if (!$result) {
-        throw new Exception("Could not insert into database. Error: " . $this->DBconn->conn->error);
-    }
+            if (!$result) {
+                throw new Exception("Could not insert into database. Error: " . $this->DBconn->conn->error);
+            }
 
-    return true;
+            return true;
     }
 
     public function getAll($assets_type, $search, $sortBy, $order, $filters)
@@ -131,8 +82,8 @@ class Assets
                 case 'status':
                     $sql .= " AND a.status = '$value'";
                     break;
-                case 'approved_date':
-                    $sql .= " AND DATE(a.approved_date) = '$value'";
+                case 'assigned_date':
+                    $sql .= " AND DATE(a.assigned_date) = '$value'";
                     break;
                 default:
                     // Handle invalid filter key
