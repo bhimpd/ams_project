@@ -52,16 +52,7 @@ class Category
     $response = CategoryRequestHandlers::update();
     Response::respondWithJson($response, $response["statusCode"]);
   }
-  public static function updateParent()
-  {
-    $response = CategoryRequestHandlers::updateParent();
-    Response::respondWithJson($response, $response["statusCode"]);
-  }
-  public static function updateChild()
-  {
-    $response = CategoryRequestHandlers::updateChild();
-    Response::respondWithJson($response, $response["statusCode"]);
-  }
+
   public static function deleteChild()
   {
     $response = CategoryRequestHandlers::deleteChild();
