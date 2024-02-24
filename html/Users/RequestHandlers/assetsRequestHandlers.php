@@ -7,7 +7,7 @@ use Configg\DBConnect;
 use Model\Assets;
 use Validate\Validator;
 use Middleware\Authorization;
-
+use ImageValidation\Imagevalidator;
 
 class AssetsRequestHandlers
 {
@@ -24,11 +24,23 @@ class AssetsRequestHandlers
                     throw new Exception("Failed to upload image");
                 }
 
+                $image_validation = Imagevalidator::imagevalidation($image);
+
+                if (!$image_validation["status"]) {
+                    return [
+                        "status" => false,
+                        "statusCode" => "422",
+                        "message" => "image validation failed",
+                        "error"=>$image_validation["message"]
+                    ];
+                }
+
                 $imageName = uniqid() . '_' . $image['name'];
-                $uploadDirectory = $_SERVER['DOCUMENT_ROOT'] . '/Users/uploaded_images/';
+                $uploadDirectory = dirname(__DIR__) . '/public/assets/uploaded_images/';
                 $uploadedFilePath = $uploadDirectory . $imageName;
 
-                $decodedData['image_name'] = $imageName;
+                $relativeImagePath = 'public/assets/uploaded_images/' . $imageName;
+                $decodedData['image_name'] = $relativeImagePath;
 
                 if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
                     throw new Exception("Failed to move uploaded file");
@@ -56,7 +68,7 @@ class AssetsRequestHandlers
                 'location' => $location,
                 'assigned_to' => $assignedTo,
                 'status' => $status,
-                'image_name' => $imageName, 
+                'image_name' => $relativeImagePath,
             ];
 
 
