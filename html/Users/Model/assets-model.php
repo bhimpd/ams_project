@@ -11,6 +11,7 @@ include __DIR__ . '/../Helpers/PaginationHelper.php';
 class Assets
 {
     const TABLE = "assets";
+    const identifier = "ITJ-DA-";
     public $DBconn;
 
     public function __construct(DbConnect $DBconn)
@@ -59,13 +60,11 @@ class Assets
     public function getAll($assets_type, $search, $sortBy, $order, $filters, $currentPage = 1, $perPage = 7)
     {
         $totalData = $this->getTotalDataCount($assets_type, $search, $filters);
-
-        // $pagination = PaginationHelper::paginate($currentPage, $perPage, $totalData);
         $pagination = PaginationHelper::paginate($currentPage, $perPage, $totalData);
         $offSet = $pagination['offSet'];
 
         $sql = "SELECT 
-            a.id,
+        CONCAT('" . self::identifier . "', a.id) AS id,
             a.name,
             a.assets_type,
             c.category_name AS category,
@@ -133,7 +132,7 @@ class Assets
 
         if (isset($id)) {
             $sql = "SELECT 
-            a.id,
+            CONCAT('" . self::identifier . "', a.id) AS id,
             a.name,
             a.assets_type,
             c.category_name AS category,

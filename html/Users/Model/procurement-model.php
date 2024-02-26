@@ -3,6 +3,8 @@
 namespace Model;
 
 use Configg\DBConnect;
+use EmailProcurement\ProcurementEmailSender;
+include __DIR__ . ".../../Email/EmailSender.php";
 
 class Procurement
 {
@@ -34,9 +36,7 @@ class Procurement
             ];
 
             $sqlProcurement = "INSERT INTO procurements (requested_by_id, status, request_urgency, approved_by_id)
-                               VALUES ('$procurementData[requested_by_id]', '$procurementData[status]','$procurementData[request_urgency]',
-                                       '$procurementData[approved_by_id]')";
-
+                               VALUES ('$procurementData[requested_by_id]', '$procurementData[status]', '$procurementData[request_urgency]', '$procurementData[approved_by_id]')";
             $resultProcurement = $this->DBconn->conn->query($sqlProcurement);
 
             if (!$resultProcurement) {
@@ -52,7 +52,7 @@ class Procurement
                 $product_name = ucfirst($product['product_name']);
                 $estimated_price = number_format($product['estimated_price'], 2, '.', '');
                 $sqlProduct = "INSERT INTO procurements_products (product_name, procurement_id, category_id, brand, estimated_price, link)
-                               VALUES ('$product_name, '$procurement_id', '$product[category_id]', '$product[brand]', '$estimated_price', '$product[link]')";
+                               VALUES ('$product_name', '$procurement_id', '$product[category_id]', '$product[brand]', '$estimated_price', '$product[link]')";
 
                 $resultProduct = $this->DBconn->conn->query($sqlProduct);
 
@@ -63,6 +63,10 @@ class Procurement
                     ];
                 }
             }
+
+            $recipientEmail = "dreamypd73@gmail.com"; 
+            $emailSent = ProcurementEmailSender::sendProcurementEmail($recipientEmail, $procurement_id);
+
             return [
                 "status" => true,
                 "procurement_id" => $procurement_id,
