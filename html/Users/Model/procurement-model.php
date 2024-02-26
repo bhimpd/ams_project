@@ -3,6 +3,8 @@
 namespace Model;
 
 use Configg\DBConnect;
+use EmailProcurement\ProcurementEmailSender;
+include __DIR__ . ".../../Email/EmailSender.php";
 
 class Procurement
 {
@@ -26,28 +28,6 @@ class Procurement
         } else {
             $data = json_decode($data, true);
 
-            $productData = [
-                'product_name' => $data['product_name'],
-                'procurement_id' => $data['procurement_id'],
-                'category_id' => $data['category_id'],
-                'brand' => $data['brand'],
-                'estimated_price' => $data['estimated_price'],
-                'link' => $data['link']
-
-            ];
-
-            $sqlProduct = "INSERT INTO procurements_products (product_name,procurement_id,category_id,brand, estimated_price, link)
-                           VALUES ('$productData[product_name]','$productData[procurement_id]','$productData[category_id]','$productData[brand]', '$productData[estimated_price]', '$productData[link]')";
-
-            $resultProduct = $this->DBconn->conn->query($sqlProduct);
-
-            if (!$resultProduct) {
-                return [
-                    "status" => false,
-                    "message" => []
-                ];
-            }
-
             $procurementData = [
                 'requested_by_id' => $data['requested_by_id'],
                 'status' => $data['status'],
@@ -56,9 +36,7 @@ class Procurement
             ];
 
             $sqlProcurement = "INSERT INTO procurements (requested_by_id, status, request_urgency, approved_by_id)
-                               VALUES ('$procurementData[requested_by_id]', '$procurementData[status]','$procurementData[request_urgency]',
-                                       '$procurementData[approved_by_id]')";
-
+                               VALUES ('$procurementData[requested_by_id]', '$procurementData[status]', '$procurementData[request_urgency]', '$procurementData[approved_by_id]')";
             $resultProcurement = $this->DBconn->conn->query($sqlProcurement);
 
             if (!$resultProcurement) {
@@ -67,16 +45,39 @@ class Procurement
                     "message" => []
                 ];
             }
+            $procurement_id = $this->DBconn->conn->insert_id;
 
+            foreach ($data['products'] as $product) {
 
+                $product_name = ucfirst($product['product_name']);
+                $estimated_price = number_format($product['estimated_price'], 2, '.', '');
+                $sqlProduct = "INSERT INTO procurements_products (product_name, procurement_id, category_id, brand, estimated_price, link)
+                               VALUES ('$product_name', '$procurement_id', '$product[category_id]', '$product[brand]', '$estimated_price', '$product[link]')";
 
-            return true;
+                $resultProduct = $this->DBconn->conn->query($sqlProduct);
+
+                if (!$resultProduct) {
+                    return [
+                        "status" => false,
+                        "message" => "Failed to insert data into procurements_products table"
+                    ];
+                }
+            }
+
+            $recipientEmail = "dreamypd73@gmail.com"; 
+            $emailSent = ProcurementEmailSender::sendProcurementEmail($recipientEmail, $procurement_id);
+
+            return [
+                "status" => true,
+                "procurement_id" => $procurement_id,
+            ];
         }
     }
 
-    public function getAll($search, $sortBy, $order, $filterKey, $filterValue)
+    public function getAll($search, $sortBy, $order, $filters)
     {
-        $sql = "SELECT pp.id, 
+        $sql = "SELECT pr.id, 
+        pp.id AS procurement_id,
         pp.product_name, 
         c.category_name,
         pp.brand,
@@ -87,9 +88,9 @@ class Procurement
         u_requested.name AS requested_by,
         u_approved.name AS approved_by
         FROM 
-            procurements_products pp
+            procurements pr
         JOIN 
-            procurements pr ON pp.procurement_id = pr.id
+            procurements_products pp ON pr.id = pp.procurement_id 
         JOIN 
             user u_requested ON pr.requested_by_id = u_requested.id
         JOIN 
@@ -98,36 +99,26 @@ class Procurement
             category c ON pp.category_id = c.id";
 
         if (!empty($search)) {
-            $sql .= " WHERE pp.product_name LIKE '%$search%'";
+            $sql .= " AND pp.product_name LIKE '%$search%'";
         }
 
-        if (!empty($filterKey) && !empty($filterValue)) {
-            if (!in_array($filterKey, ['category', 'status', 'approved_date'])) {
-                throw new \Exception("Invalid filter key.");
-            }
-
-            if ($filterKey === 'approved_date') {
-                $filterValue = date('Y-m-d', strtotime($filterValue));
-            }
-
-            if (!empty($search)) {
-                $sql .= " AND ";
-            } else {
-                $sql .= " WHERE ";
-            }
-
-            switch ($filterKey) {
+        foreach ($filters as $key => $value) {
+            switch ($key) {
                 case 'category':
-                    $sql .= "c.category_name = '$filterValue'";
+                    $sql .= " AND c.category_name = '$value'";
                     break;
                 case 'status':
-                    $sql .= "pr.status = '$filterValue'";
+                    $sql .= " AND pr.status = '$value'";
                     break;
                 case 'approved_date':
-                    $sql .= "pr.approved_date = DATE('$filterValue')";
+                    $sql .= " AND DATE(pr.approved_date) = '$value'";
                     break;
+                default:
+                    // Handle invalid filter key
+                    throw new \Exception("Invalid filter key.");
             }
         }
+
 
 
         $sql .= " ORDER BY pp.$sortBy $order";
@@ -162,7 +153,9 @@ class Procurement
         }
 
         if (isset($id)) {
-            $sql = "SELECT pp.id, 
+            $sql = "SELECT 
+            pr.id,
+            pp.id AS procurements_id,
             pp.product_name, 
             c.category_name,
             pp.brand,
@@ -173,9 +166,9 @@ class Procurement
             u_requested.name AS requested_by,
             u_approved.name AS approved_by
         FROM 
-            procurements_products pp
+            procurements pr
         JOIN 
-            procurements pr ON pp.procurement_id = pr.id
+            procurements_products pp ON pr.id = pp.procurement_id 
         JOIN 
             user u_requested ON pr.requested_by_id = u_requested.id
         JOIN 
@@ -183,7 +176,7 @@ class Procurement
         JOIN 
             category c ON pp.category_id = c.id 
             
-            WHERE pp.id='$id'";
+            WHERE pr.id='$id'";
 
             $result = $this->DBconn->conn->query($sql);
 
@@ -193,11 +186,15 @@ class Procurement
                     "message" => "unable to fetch data of given $id"
                 ];
             } else {
-                $row = $result->fetch_assoc();
+                $rows = [];
+
+                while ($row = $result->fetch_assoc()) {
+                    $rows[] = $row;
+                }
                 return [
                     "status" => "true",
                     "message" => "given $id data",
-                    "data" => $row
+                    "data" => $rows
                 ];
             }
         }
@@ -209,9 +206,8 @@ class Procurement
 
     public function delete(int $id)
     {
-
         $sql = "
-        DELETE FROM procurements_products
+        DELETE FROM procurements
         WHERE id = '$id'
         ";
         $result = $this->DBconn->conn->query($sql);
@@ -226,58 +222,26 @@ class Procurement
 
     public function update(int $id, string $data): array
     {
-
         if (!Procurement::isJson($data)) {
-            throw new \Exception("The data is not json data.");
+            throw new \Exception("The data is not JSON formatted.");
         } else {
-
             $data = json_decode($data, true);
 
-            $productData = [
-                'procurement_id' => $data['procurement_id'],
-                'product_name' => $data['product_name'],
-                'category_id' => $data['category_id'],
-                'brand' => $data['brand'],
-                'estimated_price' => $data['estimated_price'],
-                'link' => $data['link'],
-
-            ];
-
-
-            $sqlProduct = "UPDATE procurements_products 
-            SET 
-            procurement_id = '{$productData['procurement_id']}', 
-                product_name = '{$productData['product_name']}', 
-                category_id = '{$productData['category_id']}', 
-                brand = '{$productData['brand']}', 
-                estimated_price = '{$productData['estimated_price']}', 
-                link = '{$productData['link']}',  
-                updated_at = NOW()
-            WHERE id = $id";
-
-            $resultProduct = $this->DBconn->conn->query($sqlProduct);
-
-            if (!$resultProduct) {
-                throw new \Exception("Error updating product data");
-            }
             $procurementData = [
                 'requested_by_id' => $data['requested_by_id'],
-                'status' => $data['status'],
+                'status' => ucfirst($data['status']),
                 'request_urgency' => $data['request_urgency'],
                 'approved_by_id' => $data['approved_by_id'],
             ];
 
-            $id = $data['procurement_id'];
-            // die("procure" . $id);
-
             $sqlProcurement = "UPDATE procurements 
-            SET 
-                requested_by_id = '{$procurementData['requested_by_id']}',
-                status = '{$procurementData['status']}',
-                request_urgency = '{$procurementData['request_urgency']}',
-                approved_by_id = '{$procurementData['approved_by_id']}',
-                updated_at = NOW()
-            WHERE id = $id";
+                            SET 
+                            requested_by_id = '{$procurementData['requested_by_id']}',
+                            status = '{$procurementData['status']}',
+                            request_urgency = '{$procurementData['request_urgency']}',
+                            approved_by_id = '{$procurementData['approved_by_id']}',
+                            updated_at = NOW()
+                            WHERE id = $id";
 
             $resultProcurement = $this->DBconn->conn->query($sqlProcurement);
 
@@ -285,7 +249,28 @@ class Procurement
                 throw new \Exception("Error updating procurement data");
             }
 
-            return array("result" => true);
+            foreach ($data['products'] as $product) {
+                $product_name = ucfirst($product['product_name']);
+                $estimated_price = number_format($product['estimated_price'], 2, '.', '');
+
+                $sqlProduct = "UPDATE procurements_products 
+                            SET 
+                            product_name = '$product_name', 
+                            category_id = '{$product['category_id']}', 
+                            brand = '{$product['brand']}', 
+                            estimated_price = '$estimated_price', 
+                            link = '{$product['link']}',  
+                            updated_at = NOW()
+                            WHERE id = {$product['product_id']}";
+
+                $resultProduct = $this->DBconn->conn->query($sqlProduct);
+
+                if (!$resultProduct) {
+                    throw new \Exception("Error updating product data");
+                }
+            }
+
+            return ["result" => true];
         }
     }
 }
