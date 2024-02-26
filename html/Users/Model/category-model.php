@@ -1,6 +1,7 @@
 <?php
 
 namespace Model;
+
 use Configg\DBConnect;
 
 class Category
@@ -41,93 +42,35 @@ class Category
       ];
     }
   }
-  /**
-   * @param  string
-   * @return  array
-   * gets based on category_name or parent name
-   */
-  // public function get(?string $category_name, ?string $parent): array
-  // {
-  //   try {
-  //     if (!isset($category_name) && !isset($parent)) {
-  //       throw new \Exception("Category name or parent name cannot be empty!!");
-  //     }
-  //     ///to get data based on category_name only
-  //     if (isset($category_name)) {
-  //       $sql = "SELECT * FROM category WHERE category_name = '$category_name'";
 
-  //       $result = $this->DBconn->conn->query($sql);
-
-  //       if (!$result->num_rows > 0) {
-  //         throw new \Exception("Unable to fetch the given id data");
-  //       } else {
-  //         return [
-  //           "status" => "true",
-  //           "message" => "Data extracted successfully!!",
-  //           "data" => $result->fetch_assoc()
-  //         ];
-  //       }
-  //     }
-
-  //     //extracts data based on parent name only
-  //     if (isset($parent)) {
-  //       $sql = "SELECT * FROM category WHERE parent = '$parent'";
-  //       $result = $this->DBconn->conn->query($sql);
-
-  //       if (!$result->num_rows > 0) {
-  //         throw new \Exception("Unable ot find the parent category!!");
-  //       } else {
-  //         $data = array();
-  //         while ($row = $result->fetch_assoc()) {
-  //           $data[] = $row;
-  //         }
-  //         return [
-  //           "status" => "true",
-  //           "message" => "Parent data extracted successfully!!",
-  //           "data" => $data
-  //         ];
-  //       }
-  //     }
-  //     throw new \Exception("unknown error in getting category");
-  //   } catch (\Exception $e) {
-  //     return [
-  //       "status" => "false",
-  //       "message" => $e->getMessage(),
-  //       "data" => []
-  //     ];
-  //   }
-  // }
-
-  public function get(string $category_name = NULL, string $parent = NULL , $id = NULL): array
+  public function get(string $category_name = NULL, string $parent = NULL, $id = NULL): array
   {
     try {
-     $sql = "SELECT * FROM category";
+      $sql = "SELECT * FROM category";
 
       ///to get data based on category_name only
-      if(isset($parent)){
-          $sql .= " WHERE parent = '$parent'";
-      }
-      else if (isset($category_name)) {
+      if (isset($parent)) {
+        $sql .= " WHERE parent = '$parent'";
+      } else if (isset($category_name)) {
         $sql .= " WHERE category_name = '$category_name'";
+      } else if (isset($id)) {
+        $sql .= " WHERE id = '$id'";
       }
-      else if (isset($id)){
-        $sql.= " WHERE id = '$id'";
-      }
-        $result = $this->DBconn->conn->query($sql);
+      $result = $this->DBconn->conn->query($sql);
 
-        if (!$result->num_rows > 0) {
-          throw new \Exception("Unable to fetch the parameter provided !!");
-        } else {
-          $data = array();
-      while ($row = $result->fetch_assoc()) {
-        $data[] = $row;
-      }
-          return [
-            "status" => "true",
-            "message" => "Data extracted successfully!!",
-            "data" => $data
-          ];
+      if (!$result->num_rows > 0) {
+        throw new \Exception("Unable to fetch the parameter provided !!");
+      } else {
+        $data = array();
+        while ($row = $result->fetch_assoc()) {
+          $data[] = $row;
         }
+        return [
+          "status" => "true",
+          "message" => "Data extracted successfully!!",
+          "data" => $data
+        ];
+      }
     } catch (\Exception $e) {
       return [
         "status" => "false",
@@ -136,17 +79,17 @@ class Category
       ];
     }
   }
-  public function update($data){
+  public function update($data)
+  {
     try {
       $sql = "UPDATE category ";
 
-      if(isset($data["previousParent"])){
+      if (isset($data["previousParent"])) {
         $sql .= "
          SET parent = '$data[newParent]'
       WHERE parent = '$data[previousParent]'
         ";
-      }
-      else if (isset($data["previouscategory_name"])){
+      } else if (isset($data["previouscategory_name"])) {
         $sql .= "
         SET category_name = '$data[newcategory_name]'
         WHERE category_name = '$data[previouscategory_name]'
@@ -276,12 +219,26 @@ class Category
     ('$data[category_name]' , '$data[parent]')
     ";
       $result = $this->DBconn->conn->query($sql);
+
       if (!$result) {
         throw new \Exception("Could not insert into database!!");
       }
+      $sqlToGetId = "
+      SELECT * FROM category 
+      WHERE category_name = '{$data['category_name']}' AND parent = '{$data['parent']}'
+  ";
+
+      // to get the id of created row
+      $result = $this->DBconn->conn->query($sqlToGetId);
+      $row = $result->fetch_assoc();
+
+
       return [
         "status" => "true",
         "message" => "Category created successfully.",
+        "data" => $row
+          
+        
       ];
     } catch (\Exception $e) {
       return [

@@ -72,6 +72,7 @@ class CategoryRequestHandlers
       }
 
       $parentCreation["parent"] = ucfirst($parentCreation["parent"]);
+
       $response = $categoryObj->create(json_encode($parentCreation));
 
 
@@ -79,7 +80,7 @@ class CategoryRequestHandlers
         return [
           "status" => "false",
           "statusCode" => 403,
-          "message" => "Unalble to create in database.",
+          "message" => $response["message"],
           "data" => []
         ];
       }
@@ -87,7 +88,7 @@ class CategoryRequestHandlers
         "status" => "true",
         "statusCode" => 200,
         "message" => "Category created succsessfully!!",
-        "data" => $parentCreation
+        "data" => $response["data"]
       ];
     }
 
@@ -145,43 +146,67 @@ class CategoryRequestHandlers
     $response = $categoryObj->get($_GET["category_name"], $_GET["parent"], $_GET["id"]);
 
 
-    function buildCategoryTree(array $categories)
+    function buildCategoryTree(array $categories, Category $categoryObj)
     {
 
       $result = [];
-    
+
       foreach ($categories as $item) {
-          // Skip if category_name is empty
-          if (empty($item['category_name'])) {
-              continue;
-          }
-          
-          $parentName = $item['parent'];
-          $categoryName = $item['category_name'];
-          $categoryId = $item['id'];
-          
-          // If parent category doesn't exist in $result, initialize it
-          if (!isset($result[$parentName])) {
-              $result[$parentName] = [
-                  "parentName" => $parentName,
-                  "subCategory" => []
-              ];
-          }
-          
-          // Add sub-category to the parent category
-          $result[$parentName]["subCategory"][] = [
-              "id" => $categoryId,
-              "name" => $categoryName
+        $parentId = null;
+        //parent id is set to be the one that has empty child
+        if (empty($item['category_name'])) {
+          $parentId = $item['id'];
+        }
+
+        $parentName = $item['parent'];
+        $categoryName = $item['category_name'];
+        $categoryId = $item['id'];
+
+        // If parent category doesn't exist in $result, initialize it
+        if (!isset($result[$parentName])) {
+          $result[$parentName] = [
+
+            "parentName" => $parentName,
+            "parentId" => $parentId,
+            "subCategory" => []
           ];
+        }
+
+        //if null , use the parentId as id of parent
+        if (isset($result[$parentName]) && $result[$parentName]['parentId'] == null) {
+          $result[$parentName]['parentId'] = $parentId;
+        }
+        //to skip the part where parent has no child i.e. to not show it in response
+        if ($categoryName == null) {
+          continue;
+        }
+
+        // Add sub-category to the parent category
+        $result[$parentName]["subCategory"][] = [
+          "id" => $categoryId,
+          "name" => $categoryName
+        ];
       }
-      
       // Convert associative array to indexed array
       $result = array_values($result);
-      
       return ["category" => $result];
     }
-    $categoryTree = buildCategoryTree($response["data"]);
-  
+    $categoryTree = buildCategoryTree($response["data"], $categoryObj);
+    // print_r($categoryTree);
+    // die();
+
+    //check for parent with id null and inject id for it
+    foreach ($categoryTree['category'] as $key => $arr) {
+      if ($arr['parentId'] === null) {
+
+        $resp = $categoryObj->create(json_encode([
+          "parent" => $arr['parentName'],
+        ]));
+
+        $categoryTree['category'][$key]['parentId'] = $resp['data']['id'];
+      }
+    }
+
     return [
       "statusCode" => 200,
       "status" => $response["status"],
@@ -234,11 +259,11 @@ class CategoryRequestHandlers
         }
         $result = $categoryModelObj->get(NULL, $previous);
 
-        $ifnewalreadyexists =  $categoryModelObj->get($new ,NULL);
-       
+        $ifnewalreadyexists = $categoryModelObj->get($new, NULL);
+
         //adding key for newparent name validation
         $keys['new'][] = 'parent_categoryFormat';
-       
+
 
       } else if (isset($decodedData["previouscategory_name"])) {
         $previous = $decodedData["previouscategory_name"];
@@ -247,18 +272,18 @@ class CategoryRequestHandlers
           throw new Exception("Previous parent/category value not provided!!");
         }
         $result = $categoryModelObj->get($previous, NULL);
-        $ifnewalreadyexists =  $categoryModelObj->get(NULL , $new);
+        $ifnewalreadyexists = $categoryModelObj->get(NULL, $new);
 
-      //adding key for newcategory name validation
+        //adding key for newcategory name validation
 
         $keys['new'][] = 'category_nameFormat';
-        
+
       }
-     
+
       if ($result["status"] == "false") {
         throw new Exception("Previous value proviedd is not found in database!!");
       }
-      if($ifnewalreadyexists["status"]== "false"){
+      if ($ifnewalreadyexists["status"] == "false") {
         throw new Exception("New value provided already exists in database !!");
       }
       //validation
@@ -266,7 +291,7 @@ class CategoryRequestHandlers
         "previous" => $previous,
         "new" => $new,
       ];
-     
+
 
       $validationResult = Validator::validate($dataToValidate, $keys);
       if (!$validationResult["validate"]) {
@@ -278,7 +303,7 @@ class CategoryRequestHandlers
         );
         return $response;
       }
-         $response = $categoryModelObj->update( $decodedData);
+      $response = $categoryModelObj->update($decodedData);
 
       if (!$response["status"]) {
         throw new Exception("Unable to update in database!!");
@@ -296,7 +321,7 @@ class CategoryRequestHandlers
       ];
     }
   }
-  
+
 
   public static function deleteChild()
   {
