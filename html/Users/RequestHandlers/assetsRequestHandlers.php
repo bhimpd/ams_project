@@ -19,7 +19,7 @@ class AssetsRequestHandlers
 
             if (isset($_FILES['assets_image'])) {
                 $image = $_FILES['assets_image'];
-
+               
                 if ($image['error'] !== UPLOAD_ERR_OK) {
                     throw new Exception("Failed to upload image");
                 }
@@ -31,7 +31,7 @@ class AssetsRequestHandlers
                         "status" => false,
                         "statusCode" => "422",
                         "message" => "image validation failed",
-                        "error"=>$image_validation["message"]
+                        "error" => $image_validation["message"]
                     ];
                 }
 
@@ -103,7 +103,7 @@ class AssetsRequestHandlers
             }
             return [
                 "status" => true,
-                "message" => "Assets created successfully!",
+                "message" => "Assets has been added",
                 "statusCode" => "201",
                 "data" => $decodedData
             ];
@@ -155,6 +155,7 @@ class AssetsRequestHandlers
             $search = isset($_GET['search']) ? $_GET['search'] : '';
             $sortBy = isset($_GET['sortBy']) ? $_GET['sortBy'] : 'id';
             $order = isset($_GET['order']) ? $_GET['order'] : 'ASC';
+            $currentPage = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 
             $filters = [];
 
@@ -168,7 +169,8 @@ class AssetsRequestHandlers
                 $filters['assigned_date'] = $_GET['assigned_date'];
             }
 
-            $result = $assetsObj->getAll($assets_type, $search, $sortBy, $order, $filters);
+
+            $result = $assetsObj->getAll($assets_type, $search, $sortBy, $order, $filters,$currentPage);
 
             if (!$result) {
                 throw new Exception("Cannot get data !!");

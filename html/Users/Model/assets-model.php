@@ -4,6 +4,9 @@ namespace Model;
 
 use Configg\DbConnect;
 use Exception;
+use PaginationHelper;
+
+include __DIR__ . '/../Helpers/PaginationHelper.php';
 
 class Assets
 {
@@ -22,38 +25,45 @@ class Assets
     }
 
     public function create($data)
+
     {
-        
-            if (!is_array($data)) {
-                throw new Exception("Invalid data format. Data must be an array.");
-            }
 
-            $name = ucfirst($data['name']);
-            $assets_type = ucfirst($data['assets_type']);
-            $category = $data['category'];
-            $sub_category = $data['sub_category'];
-            $brand = $data['brand'];
-            $location = $data['location'];
-            $assigned_to = $data['assigned_to'];
-            $status = $data['status'];
-            $image_name = $data['image_name'];
+        if (!is_array($data)) {
+            throw new Exception("Invalid data format. Data must be an array.");
+        }
 
-            // Prepare the SQL query
-            $sql = "INSERT INTO " . self::TABLE . " (name, assets_type, category, sub_category, brand, location, assigned_to, status, image_name) 
+        $name = ucfirst($data['name']);
+        $assets_type = ucfirst($data['assets_type']);
+        $category = $data['category'];
+        $sub_category = $data['sub_category'];
+        $brand = $data['brand'];
+        $location = $data['location'];
+        $assigned_to = $data['assigned_to'];
+        $status = $data['status'];
+        $image_name = $data['image_name'];
+
+        // Prepare the SQL query
+        $sql = "INSERT INTO " . self::TABLE . " (name, assets_type, category, sub_category, brand, location, assigned_to, status, image_name) 
             VALUES ('$name', '$assets_type', '$category', '$sub_category', '$brand', '$location', '$assigned_to', '$status', '$image_name')";
 
-            // Execute the SQL query
-            $result = $this->DBconn->conn->query($sql);
+        // Execute the SQL query
+        $result = $this->DBconn->conn->query($sql);
 
-            if (!$result) {
-                throw new Exception("Could not insert into database. Error: " . $this->DBconn->conn->error);
-            }
+        if (!$result) {
+            throw new Exception("Could not insert into database. Error: " . $this->DBconn->conn->error);
+        }
 
-            return true;
+        return true;
     }
 
-    public function getAll($assets_type, $search, $sortBy, $order, $filters)
+    public function getAll($assets_type, $search, $sortBy, $order, $filters, $currentPage = 1, $perPage = 7)
     {
+        $totalData = $this->getTotalDataCount($assets_type, $search, $filters);
+
+        // $pagination = PaginationHelper::paginate($currentPage, $perPage, $totalData);
+        $pagination = PaginationHelper::paginate($currentPage, $perPage, $totalData);
+        $offSet = $pagination['offSet'];
+
         $sql = "SELECT 
             a.id,
             a.name,
@@ -93,6 +103,8 @@ class Assets
 
         // Add sorting condition
         $sql .= " ORDER BY $sortBy $order";
+        $sql .= " LIMIT $perPage OFFSET $offSet";
+
         $result = $this->DBconn->conn->query($sql);
 
         if (!$result) {
@@ -209,5 +221,46 @@ class Assets
         }
 
         return ["result" => true];
+    }
+
+    private function getTotalDataCount($assets_type, $search, $filters)
+    {
+        $sql = "SELECT COUNT(*) AS total_count FROM " . self::TABLE . " AS a
+            LEFT JOIN category AS c ON a.category = c.id
+            LEFT JOIN user AS u ON a.assigned_to = u.id
+            LEFT JOIN location AS l ON a.location = l.id
+            WHERE a.assets_type = '$assets_type'";
+
+        if (!empty($search)) {
+            $sql .= " AND a.name LIKE '%$search%'";
+        }
+
+        foreach ($filters as $key => $value) {
+            switch ($key) {
+                case 'category':
+                    $sql .= " AND c.category_name = '$value'";
+                    break;
+                case 'status':
+                    $sql .= " AND a.status = '$value'";
+                    break;
+                case 'assigned_date':
+                    $sql .= " AND DATE(a.assigned_date) = '$value'";
+                    break;
+                default:
+                    // Handle invalid filter key
+                    throw new Exception("Invalid filter key.");
+            }
+        }
+
+        $result = $this->DBconn->conn->query($sql);
+
+        if (!$result) {
+            throw new Exception("Error executing the query: " . $this->DBconn->conn->error);
+        }
+
+        $row = $result->fetch_assoc();
+        $total_count = $row['total_count'];
+
+        return $total_count;
     }
 }

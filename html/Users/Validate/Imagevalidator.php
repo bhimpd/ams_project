@@ -10,6 +10,7 @@ class Imagevalidator
         $imageDetails = pathinfo($image['name']);
         $imageExtension = strtolower($imageDetails['extension']);
         $validImageType = ["jpg", "jpeg", "png"];
+        $maxFileSize = 3 * 1024 * 1024; 
 
         if (!in_array($imageExtension, $validImageType)) {
             return [
@@ -17,6 +18,14 @@ class Imagevalidator
                 "message" => "Only png, jpeg, jpg image types are accepted."
             ];
         }
+        
+        if ($image['size'] > $maxFileSize) {
+            return [
+                "status" => false,
+                "message" => "Image size exceeds the maximum limit of 3 MB."
+            ];
+        }
+       
         return [
             "status" => true,
         ];
