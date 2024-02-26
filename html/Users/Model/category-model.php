@@ -43,19 +43,52 @@ class Category
     }
   }
 
-  public function get(string $category_name = NULL, string $parent = NULL, $id = NULL): array
+  public function getChild( $parentId ) {
+    $sql = "SELECT * FROM category WHERE parent='$parentId'";
+    $result = $this->DBconn->conn->query($sql);
+    $data = array();
+    while ($row = $result->fetch_assoc()) {
+      $data[] = $row;
+    }
+    return [
+      "status" => "true",
+      "message" => "Data extracted successfully!!",
+      "data" => $data
+    ];
+  }
+
+  public function get(string $category_name = NULL , string $parent = NULL)
   {
     try {
-      $sql = "SELECT * FROM category";
-
+      
+      $sql = "SELECT * FROM category WHERE parent IS NULL";  
+      
       ///to get data based on category_name only
-      if (isset($parent)) {
-        $sql .= " WHERE parent = '$parent'";
-      } else if (isset($category_name)) {
-        $sql .= " WHERE category_name = '$category_name'";
-      } else if (isset($id)) {
-        $sql .= " WHERE id = '$id'";
-      }
+      // if (isset($parent)) {
+    
+      //   $sql .= " WHERE parent = '$parent'";
+      // } else if (isset($category_name)) {
+      //   $sql .= " WHERE category_name = '$category_name'";
+      // } else if (isset($id)) {
+      //   // $sql .= " WHERE id = '$id'";
+      // }else {
+      //   $sql .= "WHERE parent IS NULL";
+      // }
+    
+      $result = $this->DBconn->conn->query($sql);
+      $data = array();
+        while ($row = $result->fetch_assoc()) {
+          $data[] = $row;
+        }
+        
+
+        return [
+          "status" => "true",
+          "message" => "Data extracted successfully!!",
+          "data" => $data
+        ];
+   
+    
       $result = $this->DBconn->conn->query($sql);
 
       if (!$result->num_rows > 0) {

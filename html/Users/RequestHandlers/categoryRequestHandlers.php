@@ -7,18 +7,20 @@ use Configg\DBConnect;
 use Validate\Validator;
 use Middleware\Authorization;
 
-class CategoryRequestHandlers
+interface Authorizer
 {
-  /**
-   * creates category
-   */
-  public static function createCategory(): array
+  public static function run();
+}
+class CategoryRequestHandlers implements Authorizer
+{
+
+  public static function run()
   {
     //Authorizaiton
     $response = Authorization::verifyToken();
     if (!$response["status"]) {
       return [
-        "status" => $response["status"],
+        "status" => false,
         "statusCode" => 401,
         "message" => $response["message"],
         "data" => $response["data"]
@@ -33,14 +35,33 @@ class CategoryRequestHandlers
         "data" => $response["data"]
       ];
     }
+  }
+  /**
+   * creates category
+   */
+  public static function createCategory(): array
+  {
+    
+    $auhtorize = self::run();
+    if ($auhtorize["status"]=== false) {
+      return $auhtorize;
+    }
+    
 
     $categoryObj = new Category(new DBConnect());
     $jsonData = file_get_contents('php://input');
     $decodedData = json_decode($jsonData, true);
-    $keys = [
-      'category_name' => ['required', 'empty', 'category_nameFormat'],
 
-    ];
+    //empty parent means category_name is set to be parent
+   if(empty($decodedData["parent"])){
+      $keys = [ 
+        'category_name' => ['required', 'empty', 'parent_categoryFormat']
+      ];
+   }else{
+    $keys = [
+      'category_name' => ['required', 'empty', 'category_nameFormat']
+  ];
+   }
 
     $validationResult = Validator::validate($decodedData, $keys);
 
@@ -59,9 +80,19 @@ class CategoryRequestHandlers
       $parentCreation["parent"] = $parentCreation["category_name"];
       $parentCreation["category_name"] = NULL;
 
-      //checking in database
-      $checkIfParentCategoryExists = $categoryObj->get(NULL, $parentCreation["parent"]);
 
+      //checking in database
+      $checkIfParentCategoryExists = self::get();
+  
+      
+        foreach($checkIfParentCategoryExists['data'] as $key => $value){
+          if($parentCreation['parent'] == $value['parent']){
+            print_r("parent foubnd ");
+            exit;
+          }
+          print_r("parent not found");
+        }
+        die("categoryreqhandler create");
       if ($checkIfParentCategoryExists["status"] === "true") {
         return [
           "status" => "false",
@@ -142,76 +173,25 @@ class CategoryRequestHandlers
         "data" => $response["data"]
       ];
     }
+  
     $categoryObj = new Category(new DBConnect());
     $response = $categoryObj->get($_GET["category_name"], $_GET["parent"], $_GET["id"]);
-
-
-    function buildCategoryTree(array $categories, Category $categoryObj)
-    {
-
-      $result = [];
-
-      foreach ($categories as $item) {
-        $parentId = null;
-        //parent id is set to be the one that has empty child
-        if (empty($item['category_name'])) {
-          $parentId = $item['id'];
-        }
-
-        $parentName = $item['parent'];
-        $categoryName = $item['category_name'];
-        $categoryId = $item['id'];
-
-        // If parent category doesn't exist in $result, initialize it
-        if (!isset($result[$parentName])) {
-          $result[$parentName] = [
-
-            "parentName" => $parentName,
-            "parentId" => $parentId,
-            "subCategory" => []
-          ];
-        }
-
-        //if null , use the parentId as id of parent
-        if (isset($result[$parentName]) && $result[$parentName]['parentId'] == null) {
-          $result[$parentName]['parentId'] = $parentId;
-        }
-        //to skip the part where parent has no child i.e. to not show it in response
-        if ($categoryName == null) {
-          continue;
-        }
-
-        // Add sub-category to the parent category
-        $result[$parentName]["subCategory"][] = [
-          "id" => $categoryId,
-          "name" => $categoryName
-        ];
-      }
-      // Convert associative array to indexed array
-      $result = array_values($result);
-      return ["category" => $result];
+    $data = $response['data'];
+    $res = [];
+    foreach ($data as $key => $value) {
+      $child = $categoryObj->getChild($value['id']);
+      $child = $child['data'];
+      $res[] = [
+        'parent' => $value['category_name'],
+        'id' => $value['id'],
+        'child' => count($child) > 0 ? $child : []
+      ];
     }
-    $categoryTree = buildCategoryTree($response["data"], $categoryObj);
-    // print_r($categoryTree);
-    // die();
-
-    //check for parent with id null and inject id for it
-    foreach ($categoryTree['category'] as $key => $arr) {
-      if ($arr['parentId'] === null) {
-
-        $resp = $categoryObj->create(json_encode([
-          "parent" => $arr['parentName'],
-        ]));
-
-        $categoryTree['category'][$key]['parentId'] = $resp['data']['id'];
-      }
-    }
-
     return [
-      "statusCode" => 200,
       "status" => $response["status"],
+      "statusCode" => 200,
       "message" => $response["message"],
-      "data" => $categoryTree
+      "data" => $res
     ];
   }
   /**
