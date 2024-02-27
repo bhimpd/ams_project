@@ -3,8 +3,8 @@
 namespace Model;
 
 use Configg\DBConnect;
-use EmailProcurement\ProcurementEmailSender;
-include __DIR__ . ".../../Email/EmailSender.php";
+// use EmailProcurement\ProcurementEmailSender;
+// include __DIR__ . ".../../Email/EmailSender.php";
 
 class Procurement
 {
@@ -35,20 +35,41 @@ class Procurement
                 'approved_by_id' => $data['approved_by_id'],
             ];
 
-            $sqlProcurement = "INSERT INTO procurements (requested_by_id, status, request_urgency, approved_by_id)
-                               VALUES ('$procurementData[requested_by_id]', '$procurementData[status]', '$procurementData[request_urgency]', '$procurementData[approved_by_id]')";
-            $resultProcurement = $this->DBconn->conn->query($sqlProcurement);
+            $resultInsertProcurement = null;
+            $procurement_id = null; // Initialize procurement_id
 
-            if (!$resultProcurement) {
+            // checking whether req_by_id already exist or not
+            $sqlCheckReqId = "SELECT id, number_of_items FROM procurements WHERE requested_by_id = '$procurementData[requested_by_id]'";
+            $resultCheckProcurement = $this->DBconn->conn->query($sqlCheckReqId);
+
+            if ($resultCheckProcurement) {
+                if ($resultCheckProcurement->num_rows > 0) {
+                    // User has previous procurement records, update the number_of_items
+                    $row = $resultCheckProcurement->fetch_assoc();
+                    $procurement_id = $row['id']; // Retrieve existing procurement_id
+                    $number_of_items = $row['number_of_items'] + count($data['products']);
+
+                    $sqlUpdateProcurement = "UPDATE procurements SET number_of_items = '$number_of_items' WHERE requested_by_id = '$procurementData[requested_by_id]'";
+                    $resultUpdateProcurement = $this->DBconn->conn->query($sqlUpdateProcurement);
+                } else {
+                    // User does not have previous procurement records, insert a new row
+                    $number_of_items = count($data['products']);
+
+                    $sqlInsertProcurement = "INSERT INTO procurements (requested_by_id, number_of_items, status, request_urgency, approved_by_id)
+                                             VALUES ('$procurementData[requested_by_id]', '$number_of_items', '$procurementData[status]', '$procurementData[request_urgency]', '$procurementData[approved_by_id]')";
+                    $resultInsertProcurement = $this->DBconn->conn->query($sqlInsertProcurement);
+                    $procurement_id = $this->DBconn->conn->insert_id; // Retrieve the new procurement_id
+                }
+            }
+
+            if (!$resultCheckProcurement || (!$resultInsertProcurement && !$resultUpdateProcurement)) {
                 return [
                     "status" => false,
-                    "message" => []
+                    "message" => "Failed to insert or update data in procurements table"
                 ];
             }
-            $procurement_id = $this->DBconn->conn->insert_id;
 
             foreach ($data['products'] as $product) {
-
                 $product_name = ucfirst($product['product_name']);
                 $estimated_price = number_format($product['estimated_price'], 2, '.', '');
                 $sqlProduct = "INSERT INTO procurements_products (product_name, procurement_id, category_id, brand, estimated_price, link)
@@ -64,8 +85,8 @@ class Procurement
                 }
             }
 
-            $recipientEmail = "dreamypd73@gmail.com"; 
-            $emailSent = ProcurementEmailSender::sendProcurementEmail($recipientEmail, $procurement_id);
+            // $recipientEmail = "dreamypd73@gmail.com"; 
+            // ProcurementEmailSender::sendProcurementEmail($recipientEmail, $data);
 
             return [
                 "status" => true,
@@ -73,6 +94,7 @@ class Procurement
             ];
         }
     }
+
 
     public function getAll($search, $sortBy, $order, $filters)
     {
@@ -99,18 +121,32 @@ class Procurement
             category c ON pp.category_id = c.id";
 
         if (!empty($search)) {
-            $sql .= " AND pp.product_name LIKE '%$search%'";
+            $columns = ['u_requested.name', 'pr.status', 'u_approved.name', 'pr.approved_date'];
+            $searchConditions = [];
+
+            foreach ($columns as $column) {
+                if ($column === 'pr.approved_date') {
+                    $searchConditions[] = "DATE($column) = '$search'";
+                } else {
+                    $searchConditions[] = "$column LIKE '%$search%'";
+                }
+            }
+
+            $sql .= " AND (" . implode(" OR ", $searchConditions) . ")";
         }
 
         foreach ($filters as $key => $value) {
             switch ($key) {
-                case 'category':
-                    $sql .= " AND c.category_name = '$value'";
+                case 'approvedBy':
+                    $sql .= " AND u_approved.name = '$value'";
+                    break;
+                case 'requestedBy':
+                    $sql .= " AND u_requested.name = '$value'";
                     break;
                 case 'status':
                     $sql .= " AND pr.status = '$value'";
                     break;
-                case 'approved_date':
+                case 'approvedDate':
                     $sql .= " AND DATE(pr.approved_date) = '$value'";
                     break;
                 default:
@@ -119,9 +155,7 @@ class Procurement
             }
         }
 
-
-
-        $sql .= " ORDER BY pp.$sortBy $order";
+        $sql .= " ORDER BY pr.$sortBy $order";
         $result = $this->DBconn->conn->query($sql);
 
         if (!$result) {
@@ -179,6 +213,7 @@ class Procurement
             WHERE pr.id='$id'";
 
             $result = $this->DBconn->conn->query($sql);
+            $total_data = $result->num_rows;
 
             if ($result->num_rows == 0) {
                 return [
@@ -194,6 +229,7 @@ class Procurement
                 return [
                     "status" => "true",
                     "message" => "given $id data",
+                    "total data" => $total_data,
                     "data" => $rows
                 ];
             }

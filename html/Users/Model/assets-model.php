@@ -26,9 +26,7 @@ class Assets
     }
 
     public function create($data)
-
     {
-
         if (!is_array($data)) {
             throw new Exception("Invalid data format. Data must be an array.");
         }
@@ -80,8 +78,16 @@ class Assets
         WHERE a.assets_type = '$assets_type'";
 
         if (!empty($search)) {
-            $sql .= " AND a.name LIKE '%$search%'";
+            $columns = ['id','a.name', 'a.assets_type', 'c.category_name', 'a.sub_category', 'a.brand', 'l.location', 'u.name', 'a.status'];
+            $searchConditions = [];
+        
+            foreach ($columns as $column) {
+                $searchConditions[] = "$column LIKE '%$search%'";
+            }
+        
+            $sql .= " AND (" . implode(" OR ", $searchConditions) . ")";
         }
+        
 
         foreach ($filters as $key => $value) {
             switch ($key) {

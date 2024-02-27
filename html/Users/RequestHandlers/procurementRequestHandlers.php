@@ -112,14 +112,17 @@ class ProcurementRequestHandlers
             $filters = [];
 
             // Check for individual parameters
-            if (isset($_GET['category'])) {
-                $filters['category'] = $_GET['category'];
+            if (isset($_GET['requestedBy'])) {
+                $filters['requestedBy'] = $_GET['requestedBy'];
+            }
+            if (isset($_GET['approvedBy'])) {
+                $filters['approvedBy'] = $_GET['approvedBy'];
             }
             if (isset($_GET['status'])) {
                 $filters['status'] = $_GET['status'];
             }
-            if (isset($_GET['approved_date'])) {
-                $filters['approved_date'] = $_GET['approved_date'];
+            if (isset($_GET['approvedDate'])) {
+                $filters['approvedDate'] = $_GET['approvedDate'];
             }
 
             $result = $proObj->getAll($search, $sortBy, $order, $filters);
