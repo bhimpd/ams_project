@@ -191,25 +191,10 @@ class CategoryRequestHandlers implements Authorizer
   }
   public static function get()
   {
-    //Authorizaiton
-    $response = Authorization::verifyToken();
-    if (!$response["status"]) {
-      return [
-        "status" => $response["status"],
-        "statusCode" => 401,
-        "message" => $response["message"],
-        "data" => $response["data"]
-      ];
-    }
-    //checks if user is not admin
-    if ($response["data"]["user_type"] !== "admin") {
-      return [
-        "status" => false,
-        "statusCode" => 401,
-        "message" => "User unauthorised",
-        "data" => $response["data"]
-      ];
-    }
+    $auhtorize = self::run();
+      if ($auhtorize["status"] === false) {
+        return $auhtorize;
+      }
 
     $categoryObj = new Category(new DBConnect());
     $response = $categoryObj->get($_GET["category_name"], $_GET["parent"]);
@@ -234,7 +219,13 @@ class CategoryRequestHandlers implements Authorizer
 
 
   /**
-   *  takes preParent from params and newParent name from 
+   * Authenticates  , authorises 
+   * takes params form body and parameter
+   * cheks id in database
+   * checks if given name is already assigned to other id
+   * validates the parent or child as provided using the validation constraints provided
+   * updates the data
+   *  from
    *  body as json value
    */
   public static function update(): array
@@ -250,8 +241,8 @@ class CategoryRequestHandlers implements Authorizer
 
       $jsonData = file_get_contents("php://input");
       $decodedData = json_decode($jsonData, true);
-      if (isset($_GET["Id"])) {
-        $decodedData["Id"] = $_GET["Id"];
+      if (isset($_GET["id"])) {
+        $decodedData["id"] = $_GET["id"];
 
       } else {
         throw new Exception(" Id not provided to update!!");
@@ -265,7 +256,7 @@ class CategoryRequestHandlers implements Authorizer
       }
       //check if id exists in database
 
-      $result = $categoryModelObj->getById($decodedData["Id"]);
+      $result = $categoryModelObj->getById($decodedData["id"]);
    
 
       if (!$result["status"]) {
@@ -309,12 +300,12 @@ class CategoryRequestHandlers implements Authorizer
       }
 
       //now update in database
-      $categoryModelObj-> update($decodedData);
+      $response =$categoryModelObj-> update($decodedData);
 
       return [
         "status" => true,
         "message" => "Data updated successfully",
-        "data" => []
+        "data" => $response["data"]
       ];
 
     } catch (Exception $e) {
@@ -339,137 +330,42 @@ static function delete(){
     if(empty($idToDelete)){
       throw new Exception ("Id is required  to delete!!");
     }
-
+    
+    //getting data that needs to be deleted to chek if its parent of sub category
     $result =$categoryObj->getById($idToDelete);
-
-    print_r($result);
-    if($result["parent"] == NULL){
-      print_r("herer");
+   
+    //check if the id is sub category id and delete directly if its child
+    if ($result['data']['parent'] != null) {
+      //reaches here if its jsut sub category
+  $result= $categoryObj->delete($idToDelete);
+  } 
+  else{
+    //if it reaches here means id is parent id
+    // so delete parent first
+    $result1 = $categoryObj->delete($idToDelete);
+  if(!$result1["status"]){
+    throw new Exception("Could not delete parent !!");
+  }
+    //delet all child of the parent ID
+    $result2 = $categoryObj -> deleteChildBasedOnParentId($idToDelete);
+    if(!$result2["status"]){
+      throw new Exception("Could not delete chlids of given Id !!");
     }
-  }catch(Exception $e){
+  }
 
+    return [
+      "status" => true ,
+      "message" => "Data deleted successfully !",
+      "data" => [
+        "id" => $idToDelete
+      ]
+    ];
+  }catch(Exception $e){
+    return [
+      "status" => false ,
+      "message" => $e->getMessage(),
+      "data" => []
+    ];
   }
 }
-  public static function deleteChild()
-  {
-    try {
-      //Authorizaiton
-      $response = Authorization::verifyToken();
-      if (!$response["status"]) {
-        return [
-          "status" => $response["status"],
-          "statusCode" => 401,
-          "message" => $response["message"],
-          "data" => $response["data"]
-        ];
-      }
-      //checks if user is not admin
-      if ($response["data"]["user_type"] !== "admin") {
-        return [
-          "status" => false,
-          "statusCode" => 401,
-          "message" => "User unauthorised",
-          "data" => $response["data"]
-        ];
-      }
-      $categoryModelObj = new Category(new DBConnect());
-
-      $childCategory = $_GET["childCategory"];
-
-      if (empty($childCategory)) {
-        throw new Exception(" Child Category not provided!!");
-      }
-
-      $result = $categoryModelObj->get($childCategory, NULL);
-
-      if ($result["status"] === "false") {
-        throw new Exception("Child category not found to delete!!");
-      }
-
-      $response = $categoryModelObj->deleteChild($childCategory);
-
-      if ($response["status"] == false) {
-        return [
-          "status" => $response["status"],
-          "message" => $response["message"],
-          "statusCode" => 500
-        ];
-      }
-      return [
-        "status" => $response["status"],
-        "statusCode" => 200,
-        "message" => "Child deleted successfully",
-        "data" => [
-          "childCategory" => $childCategory
-        ]
-      ];
-    } catch (Exception $e) {
-      return [
-        "status" => "false",
-        "message" => $e->getMessage(),
-        "statusCode" => 500
-      ];
-    }
-
-  }
-
-  public static function deleteParent()
-  {
-    try {
-      //Authorizaiton
-      $response = Authorization::verifyToken();
-      if (!$response["status"]) {
-        return [
-          "status" => $response["status"],
-          "statusCode" => 401,
-          "message" => $response["message"],
-          "data" => $response["data"]
-        ];
-      }
-      //checks if user is not admin
-      if ($response["data"]["user_type"] !== "admin") {
-        return [
-          "status" => false,
-          "statusCode" => 401,
-          "message" => "User unauthorised",
-          "data" => $response["data"]
-        ];
-      }
-      $categoryModelObj = new Category(new DBConnect());
-      $parentCategory = $_GET["parentCategory"];
-
-      if (empty($parentCategory)) {
-        throw new Exception(" Parent Category not provided!!");
-      }
-
-      $result = $categoryModelObj->get(NULL, $parentCategory);
-
-      if ($result["status"] === "false") {
-        throw new Exception("Parent category not found to delete!!");
-      }
-      $response = $categoryModelObj->deleteParent($parentCategory);
-
-      if ($response["status"] == false) {
-        return [
-          "status" => $response["status"],
-          "message" => $response["message"],
-          "statusCode" => 500
-        ];
-      }
-      return [
-        "status" => $response["status"],
-        "statusCode" => 200,
-        "message" => "Parent Category deleted successfully",
-        "data" => [
-          "parentCategory" => $parentCategory
-        ]
-      ];
-    } catch (Exception $e) {
-      return [
-        "status" => "false",
-        "message" => $e->getMessage(),
-        "statusCode" => 500
-      ];
-    }
-  }
 }

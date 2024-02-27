@@ -136,17 +136,6 @@ public function getParent (){
       
       $sql = "SELECT * FROM category WHERE parent IS NULL";  
       
-      ///to get data based on category_name only
-      // if (isset($parent)) {
-    
-      //   $sql .= " WHERE parent = '$parent'";
-      // } else if (isset($category_name)) {
-      //   $sql .= " WHERE category_name = '$category_name'";
-      // } else if (isset($id)) {
-      //   // $sql .= " WHERE id = '$id'";
-      // }else {
-      //   $sql .= "WHERE parent IS NULL";
-      // }
     
       $result = $this->DBconn->conn->query($sql);
       $data = array();
@@ -162,7 +151,7 @@ public function getParent (){
         ];
    
     
-      $result = $this->DBconn->conn->query($sql);
+      // $result = $this->DBconn->conn->query($sql);
 
       if (!$result->num_rows > 0) {
         throw new Exception("Unable to fetch the parameter provided !!");
@@ -200,7 +189,7 @@ public function getParent (){
 
         $sql .= "
          SET category_name = '$newValue'
-      WHERE id = $data[Id]
+      WHERE id = $data[id]
         ";
       
       
@@ -212,6 +201,9 @@ public function getParent (){
       return [
         "status" => "true",
         "message" => "Value updated successfully",
+        "data" => [
+          $data
+        ]
       ];
 
     } catch (Exception $e) {
@@ -293,20 +285,42 @@ public function getParent (){
 
     }
   }
-  public function deleteChild(string $childCategory)
+  public function deleteChildBasedOnParentId($parentId){
+    try {
+      $sql = "
+      DELETE FROM category
+      WHERE parent = '$parentId'
+      ";
+      $result = $this->DBconn->conn->query($sql);
+      if (!$result) {
+        throw new Exception("Unable to delete given id from database!!");
+      }
+      return [
+        "status" => true,
+        "message" => " Data deleted successfully.",
+      ];
+
+    } catch (Exception $e) {
+      return [
+        "status" => "false",
+        "message" => $e->getMessage(),
+      ];
+    }
+  }
+  public function delete($id)
   {
     try {
       $sql = "
       DELETE FROM category
-      WHERE category_name = '$childCategory'
+      WHERE id = '$id'
       ";
       $result = $this->DBconn->conn->query($sql);
       if (!$result) {
-        throw new Exception("Unable to delete parent in database!!");
+        throw new Exception("Unable to delete given id from database!!");
       }
       return [
-        "status" => "true",
-        "message" => "Child Category deleted successfully.",
+        "status" => true,
+        "message" => " Data deleted successfully.",
       ];
 
     } catch (Exception $e) {
