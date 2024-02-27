@@ -3,6 +3,7 @@
 namespace Model;
 
 use Configg\DBConnect;
+use Exception;
 
 class Category
 {
@@ -22,7 +23,7 @@ class Category
       $result = $this->DBconn->conn->query($sql);
 
       if (!$result->num_rows > 0) {
-        throw new \Exception("Cannot get form database!!");
+        throw new Exception("Cannot get form database!!");
       }
       $data = array();
       while ($row = $result->fetch_assoc()) {
@@ -34,7 +35,7 @@ class Category
         "data" => $data
       ];
 
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
       return [
         "status" => "false",
         "message" => $e->getMessage(),
@@ -42,7 +43,57 @@ class Category
       ];
     }
   }
-
+  public function getByName($name){
+    try{
+      $sql = "
+   SELECT * from category WHERE category_name = '$name'
+   ";
+   $result = $this->DBconn->conn->query($sql);
+   $row = $result->fetch_assoc();
+  
+  if($result -> num_rows < 1){
+   throw new Exception("Data not found.");
+  }
+  
+   return [
+     "status" => true ,
+     "message" => "Row extracted.",
+     "data" => $row
+   ];
+   }catch(Exception $e){
+     return [
+       "status" => false ,
+       "message" => $e ->getMessage(),
+       "data" => []
+     ];
+   }
+  }
+public function getById($id){
+  try{
+     $sql = "
+  SELECT * from category WHERE id = '$id'
+  ";
+  $result = $this->DBconn->conn->query($sql);
+  $row = $result->fetch_assoc();
+ 
+ if($result -> num_rows < 1){
+  throw new Exception("Data not found.");
+ }
+ 
+  return [
+    "status" => true ,
+    "message" => "Row extracted.",
+    "data" => $row
+  ];
+  }catch(Exception $e){
+    return [
+      "status" => false ,
+      "message" => $e ->getMessage(),
+      "data" => []
+    ];
+  }
+ 
+}
   public function getChild( $parentId ) {
     $sql = "SELECT * FROM category WHERE parent='$parentId'";
     $result = $this->DBconn->conn->query($sql);
@@ -56,7 +107,29 @@ class Category
       "data" => $data
     ];
   }
+public function getParent (){
+  try{
+    $sql = "SELECT * FROM category WHERE parent IS NULL"; 
+    $result = $this->DBconn->conn->query($sql);
+      $data = array();
+        while ($row = $result->fetch_assoc()) {
+          $data[] = $row;
+        }
+        
 
+        return [
+          "status" => "true",
+          "message" => "Data extracted successfully!!",
+          "data" => $data
+        ];
+  }catch(Exception $e){
+    return [
+      "status" => "false",
+      "message" => $e->getMessage(),
+      "data" => []
+    ];
+  }
+}
   public function get(string $category_name = NULL , string $parent = NULL)
   {
     try {
@@ -92,7 +165,7 @@ class Category
       $result = $this->DBconn->conn->query($sql);
 
       if (!$result->num_rows > 0) {
-        throw new \Exception("Unable to fetch the parameter provided !!");
+        throw new Exception("Unable to fetch the parameter provided !!");
       } else {
         $data = array();
         while ($row = $result->fetch_assoc()) {
@@ -104,7 +177,7 @@ class Category
           "data" => $data
         ];
       }
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
       return [
         "status" => "false",
         "message" => $e->getMessage(),
@@ -115,30 +188,33 @@ class Category
   public function update($data)
   {
     try {
+      //set new Value into newValue from parent or child
+      $newValue = NULL;
+      if(!isset($data["newParent"] )){
+        $newValue = $data["newChild"];
+      }else{
+        $newValue = $data["newParent"];
+      }
+
       $sql = "UPDATE category ";
 
-      if (isset($data["previousParent"])) {
         $sql .= "
-         SET parent = '$data[newParent]'
-      WHERE parent = '$data[previousParent]'
+         SET category_name = '$newValue'
+      WHERE id = $data[Id]
         ";
-      } else if (isset($data["previouscategory_name"])) {
-        $sql .= "
-        SET category_name = '$data[newcategory_name]'
-        WHERE category_name = '$data[previouscategory_name]'
-        ";
-      }
+      
+      
       $result = $this->DBconn->conn->query($sql);
 
       if (!$result) {
-        throw new \Exception("Unable to update in database!!");
+        throw new Exception("Unable to update in database!!");
       }
       return [
         "status" => "true",
         "message" => "Value updated successfully",
       ];
 
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
       return [
         "status" => "false",
         "message" => $e->getMessage()
@@ -156,14 +232,14 @@ class Category
       $result = $this->DBconn->conn->query($sql);
 
       if (!$result) {
-        throw new \Exception("Unable to update in database!!");
+        throw new Exception("Unable to update in database!!");
       }
       return [
         "status" => "true",
         "message" => "Parent updated successfully",
       ];
 
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
       return [
         "status" => "false",
         "message" => $e->getMessage()
@@ -179,13 +255,13 @@ class Category
       ";
       $result = $this->DBconn->conn->query($sql);
       if (!$result) {
-        throw new \Exception("Unable to update category in database!!");
+        throw new Exception("Unable to update category in database!!");
       }
       return [
         "status" => "true",
         "message" => "Category updated successfully."
       ];
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
       return [
         "status" => "false",
         "message" => $e->getMessage(),
@@ -202,14 +278,14 @@ class Category
       ";
       $result = $this->DBconn->conn->query($sql);
       if (!$result) {
-        throw new \Exception("Unable to delete parent in database!!");
+        throw new Exception("Unable to delete parent in database!!");
       }
       return [
         "status" => "true",
         "message" => "Parent Category deleted successfully.",
       ];
 
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
       return [
         "status" => "false",
         "message" => $e->getMessage(),
@@ -226,21 +302,108 @@ class Category
       ";
       $result = $this->DBconn->conn->query($sql);
       if (!$result) {
-        throw new \Exception("Unable to delete parent in database!!");
+        throw new Exception("Unable to delete parent in database!!");
       }
       return [
         "status" => "true",
         "message" => "Child Category deleted successfully.",
       ];
 
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
       return [
         "status" => "false",
         "message" => $e->getMessage(),
       ];
     }
   }
+  public function getIdbyNameandParent($category_name , $parentId){
+    try{
 
+      $sql = "
+      SELECT id FROM category
+      WHERE category_name = '$category_name' AND parent = '$parentId' 
+      ";
+      $result = $this->DBconn->conn->query($sql);
+  
+         if (!$result) {
+           throw new Exception("Could not find ");
+         }
+         $result = $result->fetch_assoc();
+        
+         return [
+          "status" => true ,
+          "message" => "Id fetched",
+          "data" => $result["id"]
+         ];
+        }catch(Exception $e){
+          return [
+            "status" => false ,
+            "message" => $e->getMessage(),
+            "data" => null
+          ];
+        }
+    
+
+  }
+  public function getIdByName($categoryName){
+    try{
+      $sql = "SELECT id FROM category 
+      WHERE category_name = '$categoryName' ";
+       $result = $this->DBconn->conn->query($sql);
+
+       if (!$result) {
+         throw new Exception("Could not find ");
+       }
+       $result = $result->fetch_assoc();
+       
+       return [
+        "status" => true ,
+        "message" => "Id fetched for " ."$categoryName",
+        "data" => $result["id"]
+       ];
+    }catch(Exception $e){
+      return [
+        "status" => false ,
+        "message" => $e->getMessage(),
+        "data" => null
+      ];
+    }
+  }
+public function createParent($data){
+
+  try{
+    $data = json_decode($data, true);
+
+  
+    //sql for parent creation where parent column remains null
+    $sql = "
+    INSERT INTO category
+    (category_name , parent)
+    VALUES 
+    ('$data[parent]' , NULL)
+    ";
+    $result = $this->DBconn->conn->query($sql);
+
+      if (!$result) {
+        throw new Exception("Could not insert into database!!");
+      }
+      $id = $this->getIdByName($data['parent']);
+     
+    return [
+      "status" => false,
+      "message" => "Created successfully",
+      "data" => [
+        "id" =>      $id['data'] ,
+        "name" => $data['parent']
+      ]
+    ];
+  }catch(Exception $e){
+    return [
+      "status" => false,
+      "message" => $e->getMessage()
+    ];
+  }
+}
   public function create($data)
   {
     try {
@@ -254,7 +417,7 @@ class Category
       $result = $this->DBconn->conn->query($sql);
 
       if (!$result) {
-        throw new \Exception("Could not insert into database!!");
+        throw new Exception("Could not insert into database!!");
       }
       $sqlToGetId = "
       SELECT * FROM category 
@@ -273,7 +436,7 @@ class Category
           
         
       ];
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
       return [
         "status" => "false",
         "message" => $e->getMessage()
