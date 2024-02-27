@@ -4,10 +4,14 @@ namespace Model;
 
 use Configg\DbConnect;
 use Exception;
+use PaginationHelper;
+
+include __DIR__ . '/../Helpers/PaginationHelper.php';
 
 class Assets
 {
     const TABLE = "assets";
+    const identifier = "ITJ-DA-";
     public $DBconn;
 
     public function __construct(DbConnect $DBconn)
@@ -20,58 +24,85 @@ class Assets
         json_decode($jsonData);
         return (json_last_error() == JSON_ERROR_NONE);
     }
+
     public function create($data)
+
     {
-        if (!Assets::isJson($data)) {
-            throw new Exception("Not json data");
-        } else {
-            $data = json_decode($data, true);
 
-            $name = $data['name'];
-            $assets_type = $data['assets_type'];
-            $category = $data['category'];
-            $sub_category = $data['sub_category'];
-            $brand = $data['brand'];
-            $location = $data['location'];
-            $assigned_to = $data['assigned_to'];
-            $status = $data['status'];
-            $assets_image = $data['assets_image'];
-
-
-            $sql = "INSERT INTO " . self::TABLE . " (name, assets_type, category, sub_category, brand, location, assigned_to, status, assets_image) 
-            VALUES ('$name','$assets_type','$category','$sub_category','$brand','$location','$assigned_to','$status','$assets_image')";
-
-            $result = $this->DBconn->conn->query($sql);
-
-            if (!$result) {
-                throw new Exception("Could not insert into database!!");
-            }
-            return [
-                "status" => "true",
-                "message" => "Assets created successfully!"
-            ];
+        if (!is_array($data)) {
+            throw new Exception("Invalid data format. Data must be an array.");
         }
+
+        $name = ucfirst($data['name']);
+        $assets_type = ucfirst($data['assets_type']);
+        $category = $data['category'];
+        $sub_category = $data['sub_category'];
+        $brand = $data['brand'];
+        $location = $data['location'];
+        $assigned_to = $data['assigned_to'];
+        $status = $data['status'];
+        $image_name = $data['image_name'];
+
+        // Prepare the SQL query
+        $sql = "INSERT INTO " . self::TABLE . " (name, assets_type, category, sub_category, brand, location, assigned_to, status, image_name) 
+            VALUES ('$name', '$assets_type', '$category', '$sub_category', '$brand', '$location', '$assigned_to', '$status', '$image_name')";
+
+        // Execute the SQL query
+        $result = $this->DBconn->conn->query($sql);
+
+        if (!$result) {
+            throw new Exception("Could not insert into database. Error: " . $this->DBconn->conn->error);
+        }
+
+        return true;
     }
 
-    public function getAll($assets_type,$search)
+    public function getAll($assets_type, $search, $sortBy, $order, $filters, $currentPage = 1, $perPage = 7)
     {
+        $totalData = $this->getTotalDataCount($assets_type, $search, $filters);
+        $pagination = PaginationHelper::paginate($currentPage, $perPage, $totalData);
+        $offSet = $pagination['offSet'];
 
         $sql = "SELECT 
-        a.id,
-        a.name,
-        a.assets_type,
-        c.category_name AS category,
-        a.brand,
-        l.location AS location,
-        u.name AS assigned_to_name,
-        a.status,
-        a.assets_image
-         FROM " . self::TABLE . " AS a
-         LEFT JOIN category AS c ON a.category = c.id
-         LEFT JOIN user AS u ON a.assigned_to = u.id
-         LEFT JOIN location AS l ON a.location = l.id
-         WHERE a.assets_type = '$assets_type'";
+        CONCAT('" . self::identifier . "', a.id) AS id,
+            a.name,
+            a.assets_type,
+            c.category_name AS category,
+            a.brand,
+            l.location AS location,
+            u.name AS assigned_to_name,
+            a.status,
+            a.image_name
+        FROM " . self::TABLE . " AS a
+        LEFT JOIN category AS c ON a.category = c.id
+        LEFT JOIN user AS u ON a.assigned_to = u.id
+        LEFT JOIN location AS l ON a.location = l.id
+        WHERE a.assets_type = '$assets_type'";
 
+        if (!empty($search)) {
+            $sql .= " AND a.name LIKE '%$search%'";
+        }
+
+        foreach ($filters as $key => $value) {
+            switch ($key) {
+                case 'category':
+                    $sql .= " AND c.category_name = '$value'";
+                    break;
+                case 'status':
+                    $sql .= " AND a.status = '$value'";
+                    break;
+                case 'assigned_date':
+                    $sql .= " AND DATE(a.assigned_date) = '$value'";
+                    break;
+                default:
+                    // Handle invalid filter key
+                    throw new Exception("Invalid filter key.");
+            }
+        }
+
+        // Add sorting condition
+        $sql .= " ORDER BY $sortBy $order";
+        $sql .= " LIMIT $perPage OFFSET $offSet";
 
         $result = $this->DBconn->conn->query($sql);
 
@@ -92,7 +123,7 @@ class Assets
         ];
     }
 
-    public function get(?int $id): array
+    public function get(?int $id)
     {
 
         if (!isset($id)) {
@@ -101,7 +132,7 @@ class Assets
 
         if (isset($id)) {
             $sql = "SELECT 
-            a.id,
+            CONCAT('" . self::identifier . "', a.id) AS id,
             a.name,
             a.assets_type,
             c.category_name AS category,
@@ -109,12 +140,12 @@ class Assets
             l.location AS location,
             u.name AS assigned_to_name,
             a.status,
-            a.assets_image
+            a.image_name
              FROM " . self::TABLE . " AS a
              LEFT JOIN category AS c ON a.category = c.id
              LEFT JOIN user AS u ON a.assigned_to = u.id
              LEFT JOIN location AS l ON a.location = l.id"
-             ." WHERE a.id='$id'";
+                . " WHERE a.id='$id'";
 
             $result = $this->DBconn->conn->query($sql);
 
@@ -136,5 +167,99 @@ class Assets
             "status" => "false",
             "message" => "Unable to get data"
         ];
+    }
+
+    public function delete(int $id)
+    {
+        $sql = "
+        DELETE FROM assets
+        WHERE id = '$id'
+        ";
+        $result = $this->DBconn->conn->query($sql);
+        if (!$result) {
+            throw new \Exception("Unable to delete asset from database!!");
+        }
+        return [
+            "status" => true,
+            "message" => "asset deleted successfully.",
+        ];
+    }
+
+    public function update(int $id, string $jsonData): array
+    {
+        $data = json_decode($jsonData, true);
+
+        $name = ucfirst($data['name']);
+        $assets_type = ucfirst($data['assets_type']);
+        $category = $data['category'];
+        $sub_category = $data['sub_category'];
+        $brand = $data['brand'];
+        $location = $data['location'];
+        $assigned_to = $data['assigned_to'];
+        $status = $data['status'];
+        $image_name = $data['image_name'];
+
+        $sql = "UPDATE " . self::TABLE . " 
+            SET 
+                name = '$name',
+                assets_type = '$assets_type',
+                category = '$category',
+                sub_category = '$sub_category',
+                brand = '$brand',
+                location = '$location',
+                assigned_to = '$assigned_to',
+                status = '$status',
+                image_name = '$image_name',
+                updated_at = NOW()
+            WHERE id = $id";
+
+        $result = $this->DBconn->conn->query($sql);
+
+        if (!$result) {
+            throw new \Exception("Error updating asset data: " . $this->DBconn->conn->error);
+        }
+
+        return ["result" => true];
+    }
+
+    private function getTotalDataCount($assets_type, $search, $filters)
+    {
+        $sql = "SELECT COUNT(*) AS total_count FROM " . self::TABLE . " AS a
+            LEFT JOIN category AS c ON a.category = c.id
+            LEFT JOIN user AS u ON a.assigned_to = u.id
+            LEFT JOIN location AS l ON a.location = l.id
+            WHERE a.assets_type = '$assets_type'";
+
+        if (!empty($search)) {
+            $sql .= " AND a.name LIKE '%$search%'";
+        }
+
+        foreach ($filters as $key => $value) {
+            switch ($key) {
+                case 'category':
+                    $sql .= " AND c.category_name = '$value'";
+                    break;
+                case 'status':
+                    $sql .= " AND a.status = '$value'";
+                    break;
+                case 'assigned_date':
+                    $sql .= " AND DATE(a.assigned_date) = '$value'";
+                    break;
+                default:
+                    // Handle invalid filter key
+                    throw new Exception("Invalid filter key.");
+            }
+        }
+
+        $result = $this->DBconn->conn->query($sql);
+
+        if (!$result) {
+            throw new Exception("Error executing the query: " . $this->DBconn->conn->error);
+        }
+
+        $row = $result->fetch_assoc();
+        $total_count = $row['total_count'];
+
+        return $total_count;
     }
 }

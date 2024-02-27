@@ -15,7 +15,6 @@ class Procurement
 
       case 'GET':
         return  self::get();
-        
 
       case 'POST':
         self::create();
@@ -55,5 +54,4 @@ class Procurement
     $response = ProcurementRequestHandlers::deleteProcurement();
     Response::respondWithJson($response, $response["statusCode"]);
   }
-
 }

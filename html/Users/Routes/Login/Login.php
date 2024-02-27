@@ -17,6 +17,6 @@ class Login
   }
   public static function login(){
     $response = LoginRequestHandlers::login();
-    Response::respondWithJson($response, $response["statusCode"]);
+    // Response::respondWithJson($response, $response["statusCode"]);
   }
 }
