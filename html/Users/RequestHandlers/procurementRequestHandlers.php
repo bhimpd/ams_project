@@ -171,6 +171,7 @@ class ProcurementRequestHandlers
         ];
     }
 
+    // ProcurementRequestHandler.php
     public static function deleteProcurement()
     {
         try {
@@ -184,7 +185,7 @@ class ProcurementRequestHandlers
                     "data" => []
                 ];
             }
-            //checks if user is not admin
+            // Checks if the user is not an admin
             if ($response["data"]["user_type"] !== "admin") {
                 return [
                     "status" => false,
@@ -193,34 +194,27 @@ class ProcurementRequestHandlers
                     "data" => $response["data"]
                 ];
             }
-            $id = $_GET["id"];
 
-            if (empty($id)) {
-                throw new Exception("Id not provided !!");
+            // Check if the request is for deleting a product or procurement
+            if (isset($_GET["product_id"])) {
+                $productID = $_GET["product_id"];
+                $deleteStatus = $proObj->deleteProduct($productID);
+            } else {
+                $procurementID = $_GET["id"];
+                $deleteStatus = $proObj->deleteProcurement($procurementID);
             }
-            $result = $proObj->get($id);
-
-            if ($result["status"] == "false") {
-                unset($result);
-                return [
-                    "status" => false,
-                    "statusCode" => 404,
-                    "message" => "procurement  of Id :$id not found"
-                ];
-            }
-            $deleteStatus = $proObj->delete($id);
-
+    
             if ($deleteStatus["status"] == true) {
                 return [
                     "status" => true,
                     "statusCode" => 200,
-                    "message" => "procurement  of Id :$id deleted successfully"
+                    "message" => $deleteStatus["message"]
                 ];
             } else {
                 return [
                     "status" => false,
                     "statusCode" => 400,
-                    "message" => "$deleteStatus[message]"
+                    "message" => $deleteStatus["message"]
                 ];
             }
         } catch (Exception $e) {
@@ -229,10 +223,11 @@ class ProcurementRequestHandlers
                 "message" => $e->getMessage()
             ];
         } finally {
-            //disconnecting from database
+            // Disconnecting from the database
             $proObj->DBconn->disconnectFromDatabase();
         }
     }
+
 
     public static function updateProcurement()
     {

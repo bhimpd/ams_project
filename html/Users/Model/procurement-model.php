@@ -41,7 +41,6 @@ class Procurement
             // checking whether req_by_id already exist or not
             $sqlCheckReqId = "SELECT id, number_of_items FROM procurements WHERE requested_by_id = '$procurementData[requested_by_id]'";
             $resultCheckProcurement = $this->DBconn->conn->query($sqlCheckReqId);
-
             if ($resultCheckProcurement) {
                 if ($resultCheckProcurement->num_rows > 0) {
                     // User has previous procurement records, update the number_of_items
@@ -240,21 +239,81 @@ class Procurement
         ];
     }
 
-    public function delete(int $id)
+    // ProcurementModel.php
+    public function deleteProcurement(int $id)
     {
-        $sql = "
-        DELETE FROM procurements
-        WHERE id = '$id'
-        ";
-        $result = $this->DBconn->conn->query($sql);
-        if (!$result) {
-            throw new \Exception("Unable to delete procurement from database!!");
-        }
+
+    // Check if the ID exists in the procurements table
+    $sqlCheckId = "SELECT * FROM procurements WHERE id = '$id'";
+    $resultCheckId = $this->DBconn->conn->query($sqlCheckId);
+
+    if ($resultCheckId === false || $resultCheckId->num_rows === 0) {
         return [
-            "status" => true,
-            "message" => "procurement deleted successfully.",
+            "status" => false,
+            "message" => "Procurement ID $id not found in procurements table."
         ];
     }
+
+
+        // Delete associated products first
+    $sqlDeleteProducts = "DELETE FROM procurements_products WHERE procurement_id = '$id'";
+    $resultDeleteProducts = $this->DBconn->conn->query($sqlDeleteProducts);
+
+    if ($resultDeleteProducts === false) {
+        throw new \Exception("Error deleting products from procurements_products table: " . $this->DBconn->conn->error);
+    }
+
+        
+        $sqlDeleteProcurement = "DELETE FROM procurements WHERE id = '$id'";
+        $resultDeleteProcurement = $this->DBconn->conn->query($sqlDeleteProcurement);
+
+        if (!$resultDeleteProcurement) {
+            throw new \Exception("Unable to delete procurement from procurements table!!");
+        }
+
+        return [
+            "status" => true,
+            "message" => "Procurement ID $id and its associated products deleted successfully."
+        ];
+    }
+
+    public function deleteProduct(int $productId)
+    {
+        $sqlFetchProcurementId = "SELECT procurement_id FROM procurements_products WHERE id = '$productId'";
+        $resultFetchProcurementId = $this->DBconn->conn->query($sqlFetchProcurementId);
+
+        if (!$resultFetchProcurementId || $resultFetchProcurementId->num_rows == 0) {
+            return [
+                "status"=>false,
+                "message"=>"Product ID $productId not found in procurements_products table!!"
+            ];
+
+        }
+
+        $row = $resultFetchProcurementId->fetch_assoc();
+        $procurementId = $row['procurement_id'];
+
+        $sqlDeleteProduct = "DELETE FROM procurements_products WHERE id = '$productId'";
+        $resultDeleteProduct = $this->DBconn->conn->query($sqlDeleteProduct);
+
+        if (!$resultDeleteProduct) {
+            throw new \Exception("Unable to delete product ID $productId from procurements_products table!!");
+        }
+
+        $sqlUpdateProcurement = "UPDATE procurements SET number_of_items = (SELECT COUNT(*) FROM procurements_products WHERE procurement_id = '$procurementId') WHERE id = '$procurementId'";
+        $resultUpdateProcurement = $this->DBconn->conn->query($sqlUpdateProcurement);
+
+        if (!$resultUpdateProcurement) {
+            throw new \Exception("Unable to update number_of_items in procurements table for procurement ID $procurementId!!");
+        }
+
+        return [
+            "status" => true,
+            "message" => "Procurement product ID $productId deleted successfully."
+        ];
+    }
+
+
 
     public function update(int $id, string $data): array
     {
