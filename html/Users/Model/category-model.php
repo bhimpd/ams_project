@@ -14,35 +14,8 @@ class Category
     $this->DBconn = $DBconn;
   }
 
-  public function getAll()
-  {
-    try {
-      $sql = "
-        SELECT * FROM category
-      ";
-      $result = $this->DBconn->conn->query($sql);
-
-      if (!$result->num_rows > 0) {
-        throw new Exception("Cannot get form database!!");
-      }
-      $data = array();
-      while ($row = $result->fetch_assoc()) {
-        $data[] = $row;
-      }
-      return [
-        "status" => "true",
-        "message" => "Data extracted successfully",
-        "data" => $data
-      ];
-
-    } catch (Exception $e) {
-      return [
-        "status" => "false",
-        "message" => $e->getMessage(),
-        "data" => []
-      ];
-    }
-  }
+  //gets the data by name 
+  //used when names are updated with already existing names
   public function getByName($name){
     try{
       $sql = "
@@ -68,6 +41,8 @@ class Category
      ];
    }
   }
+
+  //gets the data row by id
 public function getById($id){
   try{
      $sql = "
@@ -94,6 +69,8 @@ public function getById($id){
   }
  
 }
+
+//gets the child of parent based on id
   public function getChild( $parentId ) {
     $sql = "SELECT * FROM category WHERE parent='$parentId'";
     $result = $this->DBconn->conn->query($sql);
@@ -107,10 +84,14 @@ public function getById($id){
       "data" => $data
     ];
   }
+
+  //gets all parent only
 public function getParent (){
   try{
     $sql = "SELECT * FROM category WHERE parent IS NULL"; 
     $result = $this->DBconn->conn->query($sql);
+
+    
       $data = array();
         while ($row = $result->fetch_assoc()) {
           $data[] = $row;
