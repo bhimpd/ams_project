@@ -197,7 +197,15 @@ class CategoryRequestHandlers implements Authorizer
       }
 
     $categoryObj = new Category(new DBConnect());
-    $response = $categoryObj->get($_GET["category_name"], $_GET["parent"]);
+
+    $callingParameters = [];
+    if(isset($_GET["orderby"])){
+      $callingParameters["orderby"] = $_GET["orderby"];
+    }
+    if(isset($_GET["sortorder"])){
+      $callingParameters["sortorder"] = $_GET["sortorder"];
+    }
+    $response = $categoryObj->get($callingParameters);
     $data = $response['data'];
     $res = [];
     foreach ($data as $key => $value) {

@@ -111,42 +111,34 @@ public function getParent (){
     ];
   }
 }
-  public function get(string $category_name = NULL , string $parent = NULL)
+  public function get(...$options)
   {
     try {
-      
-      $sql = "SELECT * FROM category WHERE parent IS NULL";  
-      
+      $defaultOptions = [
+        "orderby" => "id",
+        "sortorder" => "ASC"
+      ];
+
+      //merging new options provided in parameters
+      $parameters =  array_merge($defaultOptions, ...$options);
     
+      //getting parents
+      $sql = "SELECT * FROM category WHERE parent IS NULL";  
+
+      //adding sort order
+      $sql .= " ORDER BY `$parameters[orderby]` $parameters[sortorder]";
+      
       $result = $this->DBconn->conn->query($sql);
       $data = array();
         while ($row = $result->fetch_assoc()) {
           $data[] = $row;
         }
-        
 
         return [
           "status" => "true",
           "message" => "Data extracted successfully!!",
           "data" => $data
         ];
-   
-    
-      // $result = $this->DBconn->conn->query($sql);
-
-      if (!$result->num_rows > 0) {
-        throw new Exception("Unable to fetch the parameter provided !!");
-      } else {
-        $data = array();
-        while ($row = $result->fetch_assoc()) {
-          $data[] = $row;
-        }
-        return [
-          "status" => "true",
-          "message" => "Data extracted successfully!!",
-          "data" => $data
-        ];
-      }
     } catch (Exception $e) {
       return [
         "status" => "false",
