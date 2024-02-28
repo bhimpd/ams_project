@@ -38,15 +38,20 @@ class SignupRequestHandlers extends UserRequestHandlers
       }
       //VALIDATION OF PROVIDED DATA
       $keys = [
-        'username' => ['empty', 'maxLength', 'minLength', 'usernameFormat'],
+        'username' => ['required','empty', 'maxLength', 'minLength', 'usernameFormat'],
         'password' => ['required', 'empty', 'maxLength', 'minLength', 'passwordFormat'],
         'email' => ['maxLength', 'minLength', 'emailFormat'],
         'name' => ['maxLength', 'minLength'],
-
-
+        'retyped_password' => ['required', 'empty']
       ];
 
       $validationResult = Validator::validate($decodedData, $keys);
+      //check if retyped password is same as passwrod
+      if($decodedData["password"] != $decodedData["retyped_password"]){
+        $validationResult["validate"] = false;
+        $validationResult["message"]["retyped_password"][] = "retyped_password must match !!";
+      }
+
       if (!$validationResult["validate"]) {
         return [
           "status" => false,
