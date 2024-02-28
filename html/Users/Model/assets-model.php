@@ -62,7 +62,7 @@ class Assets
         $offSet = $pagination['offSet'];
 
         $sql = "SELECT 
-        CONCAT('" . self::identifier . "', a.id) AS id,
+        a.id AS id,
             a.name,
             a.assets_type,
             c.category_name AS category,
@@ -118,7 +118,7 @@ class Assets
         }
 
         // Add sorting condition
-        $sql .= " ORDER BY $sortBy $order";
+        $sql .= " ORDER BY a.$sortBy $order";
         $sql .= " LIMIT $perPage OFFSET $offSet";
 
         $result = $this->DBconn->conn->query($sql);
@@ -149,7 +149,7 @@ class Assets
 
         if (isset($id)) {
             $sql = "SELECT 
-            CONCAT('" . self::identifier . "', a.id) AS id,
+            a.id AS id,
             a.name,
             a.assets_type,
             c.category_name AS category,

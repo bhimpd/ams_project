@@ -241,6 +241,14 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
           $validateData[$key] = [$key . " should contain only alphabetical characters."];
         }
       }
+      if(in_array('departmentFormat',$value)){
+      
+        if(preg_match('/^[A-Za-z\s]+$/',$data[$key])){
+          continue;
+        }else{
+          $validateData[$key] = [$key . " should contain only alphabetical characters."];
+        }
+      }
 
 
     }

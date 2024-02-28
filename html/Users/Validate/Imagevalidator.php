@@ -9,7 +9,7 @@ class Imagevalidator
 
         $imageDetails = pathinfo($image['name']);
         $imageExtension = strtolower($imageDetails['extension']);
-        $validImageType = ["jpg", "jpeg", "png"];
+        $validImageType = ["jpg", "jpeg", "png","webp"];
         $maxFileSize = 5 * 1024 * 1024; 
 
         if (!in_array($imageExtension, $validImageType)) {

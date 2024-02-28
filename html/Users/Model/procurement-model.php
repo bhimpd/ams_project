@@ -32,7 +32,7 @@ class Procurement
                 'requested_by_id' => $data['requested_by_id'],
                 'status' => $data['status'],
                 'request_urgency' => $data['request_urgency'],
-                'approved_by_id' => $data['approved_by_id'],
+                // 'approved_by_id' => $data['approved_by_id'],
             ];
 
             $resultInsertProcurement = null;
@@ -54,8 +54,8 @@ class Procurement
                     // User does not have previous procurement records, insert a new row
                     $number_of_items = count($data['products']);
 
-                    $sqlInsertProcurement = "INSERT INTO procurements (requested_by_id, number_of_items, status, request_urgency, approved_by_id)
-                                             VALUES ('$procurementData[requested_by_id]', '$number_of_items', '$procurementData[status]', '$procurementData[request_urgency]', '$procurementData[approved_by_id]')";
+                    $sqlInsertProcurement = "INSERT INTO procurements (requested_by_id, number_of_items, status, request_urgency)
+                                             VALUES ('$procurementData[requested_by_id]', '$number_of_items', '$procurementData[status]', '$procurementData[request_urgency]')";
                     $resultInsertProcurement = $this->DBconn->conn->query($sqlInsertProcurement);
                     $procurement_id = $this->DBconn->conn->insert_id; // Retrieve the new procurement_id
                 }
@@ -98,26 +98,18 @@ class Procurement
     public function getAll($search, $sortBy, $order, $filters)
     {
         $sql = "SELECT pr.id, 
-        pp.id AS procurement_id,
-        pp.product_name, 
-        c.category_name,
-        pp.brand,
-        pp.estimated_price,
-        pp.link,
-        pr.status,
-        pr.request_urgency, 
         u_requested.name AS requested_by,
+        pr.number_of_items,
+        pr.status,
         u_approved.name AS approved_by
+       
         FROM 
             procurements pr
-        JOIN 
-            procurements_products pp ON pr.id = pp.procurement_id 
-        JOIN 
+       LEFT  JOIN 
             user u_requested ON pr.requested_by_id = u_requested.id
-        JOIN 
-            user u_approved ON pr.approved_by_id = u_approved.id
-        JOIN 
-            category c ON pp.category_id = c.id";
+       LEFT JOIN 
+            user u_approved ON pr.approved_by_id = u_approved.id";
+         
 
         if (!empty($search)) {
             $columns = ['u_requested.name', 'pr.status', 'u_approved.name', 'pr.approved_date'];
@@ -164,9 +156,6 @@ class Procurement
         $data = $result->fetch_all(MYSQLI_ASSOC);
         $total_rows = $result->num_rows;
 
-        foreach ($data as &$row) {
-            unset($row['password']);
-        }
         if ($total_rows == 0) {
 
             throw new \Exception("No data found for the provided search term.");
@@ -174,46 +163,43 @@ class Procurement
 
         return [
             "total data" => $total_rows,
-            "data" => $data
+            "procurementsInfo" => $data
         ];
     }
 
     public function get(?int $id): array
     {
-
+ 
         if (!isset($id)) {
             throw new \Exception("id field cannot be empty");
         }
 
         if (isset($id)) {
             $sql = "SELECT 
-            pr.id,
-            pp.id AS procurements_id,
+            pp.id AS products_id,
             pp.product_name, 
             c.category_name,
             pp.brand,
             pp.estimated_price,
             pp.link,
-            pr.status,
-            pr.request_urgency, 
-            u_requested.name AS requested_by,
-            u_approved.name AS approved_by
+            pr.status            
+            
         FROM 
             procurements pr
-        JOIN 
+        LEFT JOIN 
             procurements_products pp ON pr.id = pp.procurement_id 
-        JOIN 
+        LEFT JOIN 
             user u_requested ON pr.requested_by_id = u_requested.id
-        JOIN 
+        LEFT JOIN 
             user u_approved ON pr.approved_by_id = u_approved.id
-        JOIN 
-            category c ON pp.category_id = c.id 
-            
-            WHERE pr.id='$id'";
+        LEFT JOIN 
+            category c ON pp.category_id = c.id "
+
+                . " WHERE pr.id='$id'";
 
             $result = $this->DBconn->conn->query($sql);
-            $total_data = $result->num_rows;
 
+            $total_data = $result->num_rows;
             if ($result->num_rows == 0) {
                 return [
                     "status" => "false",
@@ -227,8 +213,8 @@ class Procurement
                 }
                 return [
                     "status" => "true",
-                    "message" => "given $id data",
-                    "total data" => $total_data,
+                    "message" => "data fetched successfully for id $id",
+                    "total_data" => $total_data,
                     "data" => $rows
                 ];
             }
@@ -239,41 +225,39 @@ class Procurement
         ];
     }
 
-    // ProcurementModel.php
+    // deleting the procurement id and its corresponding products
     public function deleteProcurement(int $id)
     {
+        // Check if the ID exists in the procurements table
+        $sqlCheckId = "SELECT * FROM procurements WHERE id = '$id'";
+        $resultCheckId = $this->DBconn->conn->query($sqlCheckId);
 
-    // Check if the ID exists in the procurements table
-    $sqlCheckId = "SELECT * FROM procurements WHERE id = '$id'";
-    $resultCheckId = $this->DBconn->conn->query($sqlCheckId);
-
-    if ($resultCheckId === false || $resultCheckId->num_rows === 0) {
-        return [
-            "status" => false,
-            "message" => "Procurement ID $id not found in procurements table."
-        ];
-    }
+        if ($resultCheckId === false || $resultCheckId->num_rows === 0) {
+            return [
+                "status" => false,
+                "message" => "Procurement ID $id not found "
+            ];
+        }
 
 
         // Delete associated products first
-    $sqlDeleteProducts = "DELETE FROM procurements_products WHERE procurement_id = '$id'";
-    $resultDeleteProducts = $this->DBconn->conn->query($sqlDeleteProducts);
+        $sqlDeleteProducts = "DELETE FROM procurements_products WHERE procurement_id = '$id'";
+        $resultDeleteProducts = $this->DBconn->conn->query($sqlDeleteProducts);
 
-    if ($resultDeleteProducts === false) {
-        throw new \Exception("Error deleting products from procurements_products table: " . $this->DBconn->conn->error);
-    }
+        if ($resultDeleteProducts === false) {
+            throw new \Exception("Error deleting procurements products  " . $this->DBconn->conn->error);
+        }
 
-        
         $sqlDeleteProcurement = "DELETE FROM procurements WHERE id = '$id'";
         $resultDeleteProcurement = $this->DBconn->conn->query($sqlDeleteProcurement);
 
         if (!$resultDeleteProcurement) {
-            throw new \Exception("Unable to delete procurement from procurements table!!");
+            throw new \Exception("Unable to delete procurement");
         }
 
         return [
             "status" => true,
-            "message" => "Procurement ID $id and its associated products deleted successfully."
+            "message" => "Procurement ID $id  deleted successfully."
         ];
     }
 
@@ -284,10 +268,9 @@ class Procurement
 
         if (!$resultFetchProcurementId || $resultFetchProcurementId->num_rows == 0) {
             return [
-                "status"=>false,
-                "message"=>"Product ID $productId not found in procurements_products table!!"
+                "status" => false,
+                "message" => "Product ID $productId not found."
             ];
-
         }
 
         $row = $resultFetchProcurementId->fetch_assoc();
@@ -297,14 +280,14 @@ class Procurement
         $resultDeleteProduct = $this->DBconn->conn->query($sqlDeleteProduct);
 
         if (!$resultDeleteProduct) {
-            throw new \Exception("Unable to delete product ID $productId from procurements_products table!!");
+            throw new \Exception("Unable to delete product ID $productId");
         }
 
         $sqlUpdateProcurement = "UPDATE procurements SET number_of_items = (SELECT COUNT(*) FROM procurements_products WHERE procurement_id = '$procurementId') WHERE id = '$procurementId'";
         $resultUpdateProcurement = $this->DBconn->conn->query($sqlUpdateProcurement);
 
         if (!$resultUpdateProcurement) {
-            throw new \Exception("Unable to update number_of_items in procurements table for procurement ID $procurementId!!");
+            throw new \Exception("Unable to update number_of_items.");
         }
 
         return [
@@ -312,8 +295,6 @@ class Procurement
             "message" => "Procurement product ID $productId deleted successfully."
         ];
     }
-
-
 
     public function update(int $id, string $data): array
     {
@@ -326,7 +307,7 @@ class Procurement
                 'requested_by_id' => $data['requested_by_id'],
                 'status' => ucfirst($data['status']),
                 'request_urgency' => $data['request_urgency'],
-                'approved_by_id' => $data['approved_by_id'],
+                // 'approved_by_id' => $data['approved_by_id'],
             ];
 
             $sqlProcurement = "UPDATE procurements 
@@ -334,7 +315,6 @@ class Procurement
                             requested_by_id = '{$procurementData['requested_by_id']}',
                             status = '{$procurementData['status']}',
                             request_urgency = '{$procurementData['request_urgency']}',
-                            approved_by_id = '{$procurementData['approved_by_id']}',
                             updated_at = NOW()
                             WHERE id = $id";
 
@@ -368,4 +348,35 @@ class Procurement
             return ["result" => true];
         }
     }
+
+
+    public function getProcurementInfo($id) {
+        $procurementsql = "SELECT pr.*, 
+                            u_requested.name AS requested_by, 
+                            pr.status AS status,
+                            pr.request_urgency
+                        FROM procurements pr
+                        LEFT JOIN user u_requested ON pr.requested_by_id = u_requested.id
+                        WHERE pr.id='$id'";
+    
+        $proresult = $this->DBconn->conn->query($procurementsql);
+    
+        if ($proresult->num_rows == 0) {
+            return [
+                "status" => false,
+                "message" => "Procurement id $id not found",
+                "requested_by" => null,
+                "status" => null
+            ];
+        } else {
+            $req = $proresult->fetch_assoc();
+            return [
+                "status" => true,
+                "message" => "Data fetched successfully for id $id",
+                "requested_by" => $req['requested_by'],
+                "urgency"=>$req['request_urgency'],
+            ];
+        }
+    }
+    
 }
