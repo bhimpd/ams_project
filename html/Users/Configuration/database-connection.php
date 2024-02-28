@@ -23,7 +23,10 @@ class DBConnect
     $this->password = "sanchay";  //"sanchay";
     $this->connectToDatabase();
   }
-
+public function __destruct()
+{
+  $this->disconnectFromDatabase();
+}
   public function connectToDatabase()
   {
     try {
@@ -40,6 +43,7 @@ class DBConnect
   public function disconnectFromDatabase()
   {
     try {
+
       if ($this->conn) {
         $this->conn->close();
       } else {
