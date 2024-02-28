@@ -60,7 +60,7 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
           "category_name" => 64,
           "parent" => 64,
           "department" => 32,
-          "phone_numebr" => 15,
+          "phone_number" => 15,
           "designation" => 64,
           "location" => 64
         ];
@@ -82,7 +82,7 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
           "password" => "8",
           "username" => 4,
           "email" => 7,
-          "name" => 4,
+          "name" => 2,
           "category_name" => 1,
           "parent" => 1,
           "department" => 1,
