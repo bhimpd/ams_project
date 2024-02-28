@@ -11,7 +11,6 @@ include __DIR__ . '/../Helpers/PaginationHelper.php';
 class Assets
 {
     const TABLE = "assets";
-    const identifier = "ITJ-DA-";
     public $DBconn;
 
     public function __construct(DbConnect $DBconn)
@@ -92,7 +91,6 @@ class Assets
             switch ($key) {
                 case 'category':
                     $sql .= " AND c.category_name = '$value'";
-
                     break;
                 case 'status':
                     $sql .= " AND a.status = '$value'";
@@ -101,7 +99,6 @@ class Assets
                     $sql .= " AND u.name = '$value'";
                     break;
                 case 'assigned_date':
-
                     // Check if the value contains a date range
                     if (strpos($value, 'to') !== false) {
                         // Date range provided, split the range

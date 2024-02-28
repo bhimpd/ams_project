@@ -108,8 +108,8 @@ class Procurement
        LEFT  JOIN 
             user u_requested ON pr.requested_by_id = u_requested.id
        LEFT JOIN 
-            user u_approved ON pr.approved_by_id = u_approved.id";
-         
+            user u_approved ON pr.approved_by_id = u_approved.id
+       WHERE 1=1"; // Start the WHERE clause
 
         if (!empty($search)) {
             $columns = ['u_requested.name', 'pr.status', 'u_approved.name', 'pr.approved_date'];
@@ -119,7 +119,7 @@ class Procurement
                 if ($column === 'pr.approved_date') {
                     $searchConditions[] = "DATE($column) = '$search'";
                 } else {
-                    $searchConditions[] = "$column LIKE '%$search%'";
+                    $searchConditions[] = "LOWER($column) LIKE LOWER('%$search%')";
                 }
             }
 
@@ -147,6 +147,7 @@ class Procurement
         }
 
         $sql .= " ORDER BY pr.$sortBy $order";
+
         $result = $this->DBconn->conn->query($sql);
 
         if (!$result) {
@@ -163,13 +164,13 @@ class Procurement
 
         return [
             "total data" => $total_rows,
-            "procurementsInfo" => $data
+            "data" => $data
         ];
     }
 
     public function get(?int $id): array
     {
- 
+
         if (!isset($id)) {
             throw new \Exception("id field cannot be empty");
         }
@@ -350,7 +351,8 @@ class Procurement
     }
 
 
-    public function getProcurementInfo($id) {
+    public function getProcurementInfo($id)
+    {
         $procurementsql = "SELECT pr.*, 
                             u_requested.name AS requested_by, 
                             pr.status AS status,
@@ -358,9 +360,9 @@ class Procurement
                         FROM procurements pr
                         LEFT JOIN user u_requested ON pr.requested_by_id = u_requested.id
                         WHERE pr.id='$id'";
-    
+
         $proresult = $this->DBconn->conn->query($procurementsql);
-    
+
         if ($proresult->num_rows == 0) {
             return [
                 "status" => false,
@@ -374,9 +376,8 @@ class Procurement
                 "status" => true,
                 "message" => "Data fetched successfully for id $id",
                 "requested_by" => $req['requested_by'],
-                "urgency"=>$req['request_urgency'],
+                "urgency" => $req['request_urgency'],
             ];
         }
     }
-    
 }
