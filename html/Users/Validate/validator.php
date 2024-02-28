@@ -1,4 +1,5 @@
 <?php
+
 namespace Validate;
 
 class Validator
@@ -34,14 +35,12 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
           ];
           continue;
         } else {
-
         }
       }
       //check empty 
       if (in_array('empty', $value)) {
 
         if (isset($data[$key]) && !empty($data[$key])) {
-
         } else {
           $validateData[$key] = [
             $key . " cannot be empty!"
@@ -62,7 +61,8 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
           "department" => 32,
           "phone_numebr" => 15,
           "designation" => 64,
-          "location" => 64
+          "location" => 64,
+          "brand"=>16
         ];
 
         $inputLength = strlen($data[$key]);
@@ -88,7 +88,8 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
           "department" => 1,
           "phone_numebr" => 6,
           "designation" => 1,
-          "location" => 1
+          "location" => 1,
+          "brand"=>2
         ];
 
         $inputLength = strlen($data[$key]);
@@ -178,7 +179,6 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
         }
         isValidEmail($data[$key]) ? [] : $validateData[$key] = [$key . " is not valid."];
         continue;
-
       }
 
       if (in_array("user_typeFormat", $value)) {
@@ -196,14 +196,13 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
           continue;
         } else {
           $validateData[$key] = [$key . " is not valid."];
-
         }
       }
 
       if (in_array("designationFormat", $value)) {
         if (preg_match('/^[A-Za-z]+$/', $data[$key])) {
           continue;
-        }else{
+        } else {
           $validateData[$key] = [$key . " should contain only alphabets."];
         }
       }
@@ -211,7 +210,7 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
       if (in_array("category_nameFormat", $value)) {
         if (preg_match('/^[A-Za-z]+$/', $data[$key])) {
           continue;
-        }else{
+        } else {
           $validateData[$key] = [$key . " should contain only alphabets."];
         }
       }
@@ -219,37 +218,47 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
       if (in_array("parent_categoryFormat", $value)) {
         if (preg_match('/^[A-Za-z0-9]+$/', $data[$key])) {
           continue;
-        }else{
+        } else {
           $validateData[$key] = [$key . " should contain only alphabets."];
         }
       }
 
-      if(in_array('locationFormat',$value)){
-      
-        if(preg_match('/^[A-Za-z0-9\s]+$/',$data[$key])){
+      if (in_array('locationFormat', $value)) {
+
+        if (preg_match('/^[A-Za-z0-9\s]+$/', $data[$key])) {
           continue;
-        }else{
+        } else {
           $validateData[$key] = [$key . " should contain only alphanumeric characters."];
         }
       }
 
-      if(in_array('departmentFormat',$value)){
-      
-        if(preg_match('/^[A-Za-z\s]+$/',$data[$key])){
+      if (in_array('departmentFormat', $value)) {
+
+        if (preg_match('/^[A-Za-z\s]+$/', $data[$key])) {
           continue;
-        }else{
+        } else {
           $validateData[$key] = [$key . " should contain only alphabetical characters."];
         }
       }
-      if(in_array('departmentFormat',$value)){
-      
-        if(preg_match('/^[A-Za-z\s]+$/',$data[$key])){
+      if (in_array('departmentFormat', $value)) {
+
+        if (preg_match('/^[A-Za-z\s]+$/', $data[$key])) {
           continue;
-        }else{
+        } else {
           $validateData[$key] = [$key . " should contain only alphabetical characters."];
         }
       }
 
+      if (in_array('assets_format', $value)) {
+        $format = ["hardware", "software"];
+        $assets_type_value = $data[$key];
+
+        if (in_array($assets_type_value, $format,)) {
+          continue;
+        } else {
+          $validateData[$key] = [$key . " should contain either hardware or software"];
+        }
+      }
 
     }
     if (count($validateData) > 0) {

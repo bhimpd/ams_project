@@ -78,42 +78,47 @@ class Assets
         WHERE a.assets_type = '$assets_type'";
 
         if (!empty($search)) {
-            $columns = ['a.id','a.name', 'c.category_name', 'u.name', 'a.status','assigned_date'];
+            $columns = ['a.id', 'a.name', 'c.category_name', 'u.name', 'a.status', 'assigned_date'];
             $searchConditions = [];
-        
+
             foreach ($columns as $column) {
                 $searchConditions[] = "$column LIKE '%$search%'";
             }
-        
+
             $sql .= " AND (" . implode(" OR ", $searchConditions) . ")";
         }
-        
 
         foreach ($filters as $key => $value) {
             switch ($key) {
                 case 'category':
                     $sql .= " AND c.category_name = '$value'";
+
                     break;
                 case 'status':
                     $sql .= " AND a.status = '$value'";
                     break;
-                    case 'assigned_date':
-                        // Check if the value contains a date range
-                        if (strpos($value, 'to') !== false) {
-                            // Date range provided, split the range
-                            $dates = explode(' to ', $value);
-                            $start_date = trim($dates[0]);
-                            $end_date = trim($dates[1]);
-                            // Add the date range condition to the SQL query
-                            $sql .= " AND DATE(a.assigned_date) BETWEEN '$start_date' AND '$end_date'";
-                        } else {
-                            // Single date provided, filter by that date
-                            $sql .= " AND DATE(a.assigned_date) = '$value'";
-                        }
+                case 'assigned_to':
+                    $sql .= " AND u.name = '$value'";
                     break;
+                case 'assigned_date':
+
+                    // Check if the value contains a date range
+                    if (strpos($value, 'to') !== false) {
+                        // Date range provided, split the range
+                        $dates = explode(' to ', $value);
+                        $start_date = trim($dates[0]);
+                        $end_date = trim($dates[1]);
+                        // Add the date range condition to the SQL query
+                        $sql .= " AND DATE(a.assigned_date) BETWEEN '$start_date' AND '$end_date'";
+                    } else {
+                        // Single date provided, filter by that date
+                        $sql .= " AND DATE(a.assigned_date) = '$value'";
+                    }
+                    break;
+
                 default:
                     // Handle invalid filter key
-                    throw new Exception("Invalid filter key.");
+                    throw new Exception("Invalid filter key11.");
             }
         }
 
@@ -261,6 +266,9 @@ class Assets
                     break;
                 case 'assigned_date':
                     $sql .= " AND DATE(a.assigned_date) = '$value'";
+                    break;
+                case 'assigned_to':
+                    $sql .= " AND u.name = '$value'";
                     break;
                 default:
                     // Handle invalid filter key

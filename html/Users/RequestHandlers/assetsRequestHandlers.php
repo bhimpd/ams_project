@@ -17,9 +17,53 @@ class AssetsRequestHandlers
         try {
             $assetsObj = new Assets(new DBConnect());
 
+            // Get other form-data parameters
+            $name = isset($_POST['name']) ? $_POST['name'] : '';
+            $assetsType = isset($_POST['assets_type']) ? $_POST['assets_type'] : '';
+            $category = isset($_POST['category']) ? $_POST['category'] : '';
+            $subCategory = isset($_POST['sub_category']) ? $_POST['sub_category'] : '';
+            $brand = isset($_POST['brand']) ? $_POST['brand'] : '';
+            $location = isset($_POST['location']) ? $_POST['location'] : '';
+            $assignedTo = isset($_POST['assigned_to']) ? $_POST['assigned_to'] : '';
+            $status = isset($_POST['status']) ? $_POST['status'] : '';
+
+            $decodedData = [
+                'name' => $name,
+                'assets_type' => $assetsType,
+                'category' => $category,
+                'sub_category' => $subCategory,
+                'brand' => $brand,
+                'location' => $location,
+                'assigned_to' => $assignedTo,
+                'status' => $status,
+            ];
+
+
+            $keys = [
+                'name' => ['empty', 'minLength', 'maxLength'],
+                'assets_type' => ['empty', 'assets_format'],
+                'category' => ['empty'],
+                'sub_category' => ['empty'],
+                'brand' => ['empty', 'minlength', 'maxLength', 'category_nameFormat'],
+                'location' => ['required', 'empty'],
+                'assigned_to' => ['empty'],
+                'status' => ['empty', 'required'],
+            ];
+
+            $validationResult = Validator::validate($decodedData, $keys);
+
+            if (!$validationResult["validate"]) {
+                return [
+                    "status" => false,
+                    "statusCode" => "422",
+                    "message" => $validationResult
+                ];
+            }
+
+
             if (isset($_FILES['assets_image'])) {
                 $image = $_FILES['assets_image'];
-               
+
                 if ($image['error'] !== UPLOAD_ERR_OK) {
                     throw new Exception("Failed to upload image");
                 }
@@ -49,49 +93,7 @@ class AssetsRequestHandlers
                 throw new Exception("No image file uploaded");
             }
 
-            // Get other form-data parameters
-            $name = isset($_POST['name']) ? $_POST['name'] : '';
-            $assetsType = isset($_POST['assets_type']) ? $_POST['assets_type'] : '';
-            $category = isset($_POST['category']) ? $_POST['category'] : '';
-            $subCategory = isset($_POST['sub_category']) ? $_POST['sub_category'] : '';
-            $brand = isset($_POST['brand']) ? $_POST['brand'] : '';
-            $location = isset($_POST['location']) ? $_POST['location'] : '';
-            $assignedTo = isset($_POST['assigned_to']) ? $_POST['assigned_to'] : '';
-            $status = isset($_POST['status']) ? $_POST['status'] : '';
 
-            $decodedData = [
-                'name' => $name,
-                'assets_type' => $assetsType,
-                'category' => $category,
-                'sub_category' => $subCategory,
-                'brand' => $brand,
-                'location' => $location,
-                'assigned_to' => $assignedTo,
-                'status' => $status,
-                'image_name' => $relativeImagePath,
-            ];
-
-
-            $keys = [
-                'name' => ['empty'],
-                'assets_type' => ['empty'],
-                'category' => ['empty'],
-                'sub_category' => [],
-                'brand' => [],
-                'location' => ['empty', 'maxlength'],
-                'assigned_to' => ['empty'],
-                'status' => [],
-            ];
-
-            $validationResult = Validator::validate($decodedData, $keys);
-
-            if (!$validationResult["validate"]) {
-                return [
-                    "status" => false,
-                    "statusCode" => "422",
-                    "message" => $validationResult
-                ];
-            }
             $result = $assetsObj->create($decodedData);
 
             if (!$result) {
@@ -168,9 +170,13 @@ class AssetsRequestHandlers
             if (isset($_GET['assigned_date'])) {
                 $filters['assigned_date'] = $_GET['assigned_date'];
             }
+           
+            if (isset($_GET['assigned_to'])) {
+                $filters['assigned_to'] = $_GET['assigned_to'];
+            }
 
-
-            $result = $assetsObj->getAll($assets_type, $search, $sortBy, $order, $filters,$currentPage);
+            //  var_dump($filters);die;
+            $result = $assetsObj->getAll($assets_type, $search, $sortBy, $order, $filters, $currentPage);
 
             if (!$result) {
                 throw new Exception("Cannot get data !!");
