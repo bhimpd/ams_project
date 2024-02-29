@@ -269,7 +269,7 @@ class UserRequestHandlers implements Authorizer
       $jsonData = file_get_contents('php://input');
       //to validatte in the keys
       $decodedData = json_decode($jsonData, true);
-      $id = $_GET["id"];
+      $id = $_GET["id"] ?? null;
       if (!$id) {
         throw new Exception("Id not provided !!");
       }

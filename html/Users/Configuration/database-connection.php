@@ -25,7 +25,7 @@ class DBConnect
   }
 public function __destruct()
 {
-  $this->disconnectFromDatabase();
+  // $this->disconnectFromDatabase();
 }
   public function connectToDatabase()
   {

@@ -41,7 +41,7 @@ class LocationRequestHandlers implements Authorizer
    */
   public static function createLocation(): array
   {
-      //token and role check 
+    //token and role check 
     $auhtorize = self::run();
     if ($auhtorize["status"] === false) {
       return $auhtorize;
@@ -52,7 +52,7 @@ class LocationRequestHandlers implements Authorizer
     $decodedData = json_decode($jsonData, true);
 
     $keys = [
-      'location' => [ 'required' ,'empty' , 'locationFormat']
+      'location' => ['required', 'empty', 'locationFormat']
     ];
     $validationResult = Validator::validate($decodedData, $keys);
 
@@ -66,15 +66,15 @@ class LocationRequestHandlers implements Authorizer
     }
 
     $checkIfLocationExists = $locationObj->get($decodedData["location"]);
-   
+
     if ($checkIfLocationExists["status"] === "true") {
       return [
         "status" => "false",
         "statusCode" => 403,
         "message" => "Location alredy exists",
         "data" => [
-          "id"=>$checkIfLocationExists["data"]["id"]
-          ]
+          "id" => $checkIfLocationExists["data"]["id"]
+        ]
       ];
     }
     $response = $locationObj->create($jsonData);
@@ -99,30 +99,17 @@ class LocationRequestHandlers implements Authorizer
    * @return  array
    * gets all the avaliable locations in database 
    */
-  public static function getAllLocation():array{
-    try{
-        //Authorizaiton
-    $response = Authorization::verifyToken();
-    if (!$response["status"]) {
-      return [
-        "status" => $response["status"],
-        "statusCode" => 401,
-        "message" => $response["message"],
-        "data" => $response["data"]
-      ];
-    }
-    //checks if user is not admin
-    if ($response["data"]["user_type"] !== "admin") {
-      return [
-        "status" => false,
-        "statusCode" => 401,
-        "message" => "User unauthorised",
-        "data" => $response["data"]
-      ];
-    }
+  public static function getAllLocation(): array
+  {
+    try {
+      //token and role check 
+      $auhtorize = self::run();
+      if ($auhtorize["status"] === false) {
+        return $auhtorize;
+      }
       $locationObj = new Location(new DBConnect());
       $response = $locationObj->getAll();
-      if(!$response['status']){
+      if (!$response['status']) {
         throw new Exception("Unable to fetch from database!!");
       }
 
@@ -133,68 +120,70 @@ class LocationRequestHandlers implements Authorizer
         "data" => $response['data']
       ];
 
-    }catch(Exception $e){
+    } catch (Exception $e) {
       return [
         "status" => "false",
         "statusCode" => 404,
-        "message" => $e->getMessage() ,
+        "message" => $e->getMessage(),
         "data" => []
       ];
     }
   }
 
-  public static function updateLocation(){
-    try{
-        //Authorizaiton
-    $response = Authorization::verifyToken();
-    if (!$response["status"]) {
-      return [
-        "status" => $response["status"],
-        "statusCode" => 401,
-        "message" => $response["message"],
-        "data" => $response["data"]
-      ];
-    }
-    //checks if user is not admin
-    if ($response["data"]["user_type"] !== "admin") {
-      return [
-        "status" => false,
-        "statusCode" => 401,
-        "message" => "User unauthorised",
-        "data" => $response["data"]
-      ];
-    }
+  public static function updateLocation()
+  {
+    try {
+      
+      //token and role check 
+      $auhtorize = self::run();
+      if ($auhtorize["status"] === false) {
+        return $auhtorize;
+      }
       $locationObj = new Location(new DBConnect());
       $jsonData = file_get_contents("php://input");
-      $decodedData = json_decode($jsonData , true);
-     
+      $decodedData = json_decode($jsonData, true);
+
+      if (isset($_GET["id"])) {
+        $decodedData["id"] = $_GET["id"];
+      }
+
       //validation
       $keys = [
-        "previousLocation" => ['required' ,'empty' ],
-        "newLocation" => ['required', 'empty'  , 'locationFormat']
+        "id" => ['required', 'empty'],
+        "newLocation" => ['required', 'empty', 'locationFormat']
       ];
 
-      $validationResult = Validator::validate($decodedData , $keys);
+      $validationResult = Validator::validate($decodedData, $keys);
 
-     
-      if(!$validationResult["validate"]){
-        return  [
+
+      if (!$validationResult["validate"]) {
+        return [
           "status" => "false",
           "statusCode" => "409",
-          "message"=> $validationResult,
+          "message" => $validationResult,
           "data" => $decodedData
         ];
       }
+      //check if the id exists in database
+      $checkIfIdExists = $locationObj->getById($decodedData["id"]);
 
-      //check if is present in database
-      $result = $locationObj->get($decodedData["previousLocation"]);
+      //if status is true , location name already exists
+      if ($checkIfIdExists["status"] == "false") {
 
-      if ($result["status"] == "false") {
-        throw new Exception("Location not found in database to update!!");
+        throw new Exception("Id does not exists !!");
+      }
+     
+      //checking new if new name already exsist in database
+      $checkIfNewNameAlreadyExists = $locationObj->get($decodedData["newLocation"]);
+
+      //if status is true , location name already exists
+      if ($checkIfNewNameAlreadyExists["status"] == "true") {
+
+        throw new Exception("New name provided already exists !!");
       }
 
       $response = $locationObj->updateLocation($decodedData);
-      
+
       if (!$response["status"]) {
         throw new Exception("Unalbe to update in database!!");
       }
@@ -205,46 +194,42 @@ class LocationRequestHandlers implements Authorizer
         "data" => $decodedData
       ];
 
-    }catch(Exception $e){
+    } catch (Exception $e) {
       return [
         "status" => "false",
         "statusCode" => 409,
-        "message" => $e->getMessage() ,
+        "message" => $e->getMessage(),
         "data" => $decodedData
       ];
     }
   }
 
-  public static function deleteLocation():array{
-    try{
-        //Authorizaiton
-    $response = Authorization::verifyToken();
-    if (!$response["status"]) {
-      return [
-        "status" => $response["status"],
-        "statusCode" => 401,
-        "message" => $response["message"],
-        "data" => $response["data"]
-      ];
-    }
-    //checks if user is not admin
-    if ($response["data"]["user_type"] !== "admin") {
-      return [
-        "status" => false,
-        "statusCode" => 401,
-        "message" => "User unauthorised",
-        "data" => $response["data"]
-      ];
-    }
+  public static function deleteLocation(): array
+  {
+    try {
+      //token and role check 
+      $auhtorize = self::run();
+      if ($auhtorize["status"] === false) {
+        return $auhtorize;
+      }
+
       $locationObj = new Location(new DBConnect());
       $jsonData = file_get_contents("php://input");
-      $decodedData = json_decode($jsonData , true);
-     
+      $decodedData = json_decode($jsonData, true);
+
+       if (isset($_GET["id"])) {
+        $decodedData["id"] = $_GET["id"];
+      }
+
       //validation
       $keys = [
-        "location" => [ 'required' , 'empty'  , ]
+        "id" => ['required', 'empty'],
+       
       ];
+
       $validationResult = Validator::validate($decodedData, $keys);
+
+
       if (!$validationResult["validate"]) {
         return [
           "status" => "false",
@@ -253,21 +238,20 @@ class LocationRequestHandlers implements Authorizer
           "data" => $decodedData
         ];
       }
-      //check if its in database
-      //check if is present in database
-      $result = $locationObj->get($decodedData["location"]);
+      //check if the id exists in database
+      $checkIfIdExists = $locationObj->getById($decodedData["id"]);
 
-      if ($result["status"] == "false") {
-        throw new Exception("Location not found in database to delete!!");
+      //if status is true , location name already exists
+      if ($checkIfIdExists["status"] == "false") {
+
+        throw new Exception("Id does not exists !!");
       }
-      
-      $response = $locationObj->deleteLocation($decodedData);
-      if(!$response["status"]){
-        return [
-          "status" => $response["status"],
-          "message" => $response["message"],
-          "statusCode" => 500
-        ];
+
+      //calling model function to delete locaotion  using id provided
+      $response = $locationObj->deleteLocationById($decodedData["id"]);
+
+      if (!$response["status"]) {
+        throw new Exception($response["message"]);
       }
       return [
         "status" => $response["status"],
@@ -275,13 +259,13 @@ class LocationRequestHandlers implements Authorizer
         "message" => "Location deleted successfully",
         "data" => $decodedData
       ];
-      
-    }catch(Exception $e){
+
+    } catch (Exception $e) {
       return [
         "status" => "false",
         "statusCode" => 409,
-        "message" => $e->getMessage() ,
-        "data" =>$decodedData
+        "message" => $e->getMessage(),
+        "data" => $decodedData
       ];
     }
   }
