@@ -108,6 +108,16 @@ class LocationRequestHandlers implements Authorizer
         return $auhtorize;
       }
       $locationObj = new Location(new DBConnect());
+
+      //sorting 
+
+//empty array to store filter-sort... parameters
+    $callingParameters = [];
+
+ // Define the list of parameters to check
+ $parametersToCheck = ["orderby", "sortorder", ];
+
+
       $response = $locationObj->getAll();
       if (!$response['status']) {
         throw new Exception("Unable to fetch from database!!");

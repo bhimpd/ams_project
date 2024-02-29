@@ -246,62 +246,71 @@ class CategoryRequestHandlers implements Authorizer
 
       $jsonData = file_get_contents("php://input");
       $decodedData = json_decode($jsonData, true);
-      if (isset($_GET["id"])) {
-        $decodedData["id"] = $_GET["id"];
+      $decodedData["id"] = $_GET["id"];
 
-      } else {
-        throw new Exception(" Id not provided to update!!");
-      }
 
-      if (!isset($decodedData["newParent"])) {
-        if (!isset($decodedData["newChild"])) {
-          throw new Exception("New value  is required for update !!");
-        }
-
-      }
+      $keys = [
+        'id' => ['required' , 'empty']
+      ];
+    
+         
+          if(isset($decodedData["newParent"])){
+            $keys['newParent'] = 
+                ['empty', 'parent_categoryFormat']
+            ;
+          }else{//else part means newChild is set
+    
+            $keys['newChild'] = [
+                [ 'required' , 'category_nameFormat'],
+            ];
+          }
+          
+          $validationResult = Validator::validate($decodedData, $keys);
+    
+          if (!$validationResult["validate"]) {
+            return [
+              "status" => "false",
+              "statusCode" => "409",
+              "message" => $validationResult,
+              "data" => json_decode($jsonData, true)
+            ];
+          }
+     
+  $exceptionMessageFormat =    [
+    "status" => "false",
+    "statusCode" => "409",
+    "message"=>[
+      "validation" => false,
+      "message" => []
+    ]
+  ];
+      
       //check if id exists in database
 
       $result = $categoryModelObj->getById($decodedData["id"]);
-   
-
+      
       if (!$result["status"]) {
-        throw new exception("Id not found in database !!");
+     
+        $exceptionMessageFormat["message"]["message"]["id"] ="Id not found in database !!";
+        return $exceptionMessageFormat;
       }
-
+      
       //check if new Value is already assigned to other 
-      $newValue ="hfgdgfd";
+      $newValue ="";
+      $tempKey="";
       if(isset($decodedData["newParent"] )){
+        $tempKey ="newParent";
         $newValue = $decodedData["newParent"];
       }elseif(isset($decodedData["newChild"])){
+        $tempKey = "newChild";
         $newValue = $decodedData["newChild"];
       }
      
      
-      $result  = $categoryModelObj->getByName($newValue);
+      $result  = $categoryModelObj->getByName($newValue , $excludeId = $decodedData["id"]);
       if($result["status"]){
-        throw new Exception("The name is already assigned to other id !!");
-      }
-      
-      //new value validation
-      if(isset($decodedData["newParent"])){
-        $keys = [
-          'newParent' => ['empty', 'parent_categoryFormat']
-        ];
-      }else{//else part meand newChild is set
-
-        $keys = [
-          'newChild' => [  'category_nameFormat'],
-        ];
-      }
-      $validationResult = Validator::validate($decodedData, $keys);
-
-      if (!$validationResult["validate"]) {
-        return [
-          "status" => "false",
-          "statusCode" => "409",
-          "message" => $validationResult,
-          "data" => json_decode($jsonData, true)
-        ];
+        $exceptionMessageFormat["message"]["message"][$tempKey] ="The name is already assigned to other id !!";
+        return $exceptionMessageFormat;
       }
 
       //now update in database
