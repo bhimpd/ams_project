@@ -7,13 +7,10 @@ use Configg\DBConnect;
 use Validate\Validator;
 use Middleware\Authorization;
 
-interface Authorizer
-{
-  public static function run();
-}
+
 class CategoryRequestHandlers implements Authorizer
 {
-
+//reuseable function for authorization
   public static function run()
   {
     //Authorizaiton
