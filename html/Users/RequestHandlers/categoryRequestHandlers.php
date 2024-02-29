@@ -10,7 +10,7 @@ use Middleware\Authorization;
 
 class CategoryRequestHandlers implements Authorizer
 {
-//reuseable function for authorization
+  //reuseable function for authorization
   public static function run()
   {
     //Authorizaiton
@@ -189,17 +189,17 @@ class CategoryRequestHandlers implements Authorizer
   public static function get()
   {
     $auhtorize = self::run();
-      if ($auhtorize["status"] === false) {
-        return $auhtorize;
-      }
+    if ($auhtorize["status"] === false) {
+      return $auhtorize;
+    }
 
     $categoryObj = new Category(new DBConnect());
 
     $callingParameters = [];
-    if(isset($_GET["orderby"])){
+    if (isset($_GET["orderby"])) {
       $callingParameters["orderby"] = $_GET["orderby"];
     }
-    if(isset($_GET["sortorder"])){
+    if (isset($_GET["sortorder"])) {
       $callingParameters["sortorder"] = $_GET["sortorder"];
     }
     $response = $categoryObj->get($callingParameters);
@@ -250,71 +250,77 @@ class CategoryRequestHandlers implements Authorizer
 
 
       $keys = [
-        'id' => ['required' , 'empty']
+        'id' => ['required', 'empty']
       ];
-    
-         
-          if(isset($decodedData["newParent"])){
-            $keys['newParent'] = 
-                ['empty', 'parent_categoryFormat']
-            ;
-          }else{//else part means newChild is set
-    
-            $keys['newChild'] = [
-                [ 'required' , 'category_nameFormat'],
-            ];
-          }
-          
-          $validationResult = Validator::validate($decodedData, $keys);
-    
-          if (!$validationResult["validate"]) {
-            return [
-              "status" => "false",
-              "statusCode" => "409",
-              "message" => $validationResult,
-              "data" => json_decode($jsonData, true)
-            ];
-          }
-     
-  $exceptionMessageFormat =    [
-    "status" => "false",
-    "statusCode" => "409",
-    "message"=>[
-      "validation" => false,
-      "message" => []
-    ]
-  ];
-      
+
+
+      if (isset($decodedData["newParent"])) {
+        $keys['newParent'] =
+          ['empty', 'parent_categoryFormat']
+        ;
+      } else {//else part means newChild is set
+
+        $keys['newChild'] = [
+          ['required', 'category_nameFormat'],
+        ];
+      }
+
+      $validationResult = Validator::validate($decodedData, $keys);
+
+      if (!$validationResult["validate"]) {
+        return [
+          "status" => "false",
+          "statusCode" => "409",
+          "message" => $validationResult,
+          "data" => json_decode($jsonData, true)
+        ];
+      }
+
+      $exceptionMessageFormat = [
+        "status" => "false",
+        "statusCode" => "409",
+        "message" => [
+          "validation" => false,
+          "message" => []
+        ]
+      ];
+
       //check if id exists in database
 
       $result = $categoryModelObj->getById($decodedData["id"]);
       
+
       if (!$result["status"]) {
-     
-        $exceptionMessageFormat["message"]["message"]["id"] ="Id not found in database !!";
+
+        $exceptionMessageFormat["message"]["message"]["id"] = "Id not found in database !!";
         return $exceptionMessageFormat;
       }
-      
+    
+
       //check if new Value is already assigned to other 
-      $newValue ="";
-      $tempKey="";
-      if(isset($decodedData["newParent"] )){
-        $tempKey ="newParent";
+      $newValue = "";
+      $tempKey = "";
+      if (isset($decodedData["newParent"])) {
+        $tempKey = "newParent";
         $newValue = $decodedData["newParent"];
-      }elseif(isset($decodedData["newChild"])){
+      } elseif (isset($decodedData["newChild"])) {
         $tempKey = "newChild";
         $newValue = $decodedData["newChild"];
       }
-     
-     
-      $result  = $categoryModelObj->getByName($newValue , $excludeId = $decodedData["id"]);
-      if($result["status"]){
-        $exceptionMessageFormat["message"]["message"][$tempKey] ="The name is already assigned to other id !!";
-        return $exceptionMessageFormat;
-      }
 
-      //now update in database
-      $response =$categoryModelObj-> update($decodedData);
+      //getting by name to check if the neam exists
+      $result = $categoryModelObj->getByName($newValue );
+
+      
+     //if id provided and id fetched by name is not same means it is not same row 
+      if ($result["status"] && ($result["data"]["id"] != $decodedData["id"])) {
+                 $exceptionMessageFormat["message"]["message"][$tempKey] = "The name is already assigned to other id !!";
+          return $exceptionMessageFormat;
+      
+      }
+ 
+            //now update in database
+      $response = $categoryModelObj->update($decodedData);
 
       return [
         "status" => true,
@@ -330,56 +336,70 @@ class CategoryRequestHandlers implements Authorizer
     }
   }
 
-static function delete(){
-  try{
-    //authorization
-    $auhtorize = self::run();
-    if ($auhtorize["status"] === false) {
-      return $auhtorize;
-    }
-    $categoryObj = new Category(new DBConnect());
+  static function delete()
+  {
+    try {
+      //authorization
+      $auhtorize = self::run();
+      if ($auhtorize["status"] === false) {
+        return $auhtorize;
+      }
+      $categoryObj = new Category(new DBConnect());
 
-    //check if id is provided
-    $idToDelete = $_GET["id"];
-    if(empty($idToDelete)){
-      throw new Exception ("Id is required  to delete!!");
-    }
-    
-    //getting data that needs to be deleted to chek if its parent of sub category
-    $result =$categoryObj->getById($idToDelete);
-   
-    //check if the id is sub category id and delete directly if its child
-    if ($result['data']['parent'] != null) {
-      //reaches here if its jsut sub category
-  $result= $categoryObj->delete($idToDelete);
-  } 
-  else{
-    //if it reaches here means id is parent id
-    // so delete parent first
-    $result1 = $categoryObj->delete($idToDelete);
-  if(!$result1["status"]){
-    throw new Exception("Could not delete parent !!");
-  }
-    //delet all child of the parent ID
-    $result2 = $categoryObj -> deleteChildBasedOnParentId($idToDelete);
-    if(!$result2["status"]){
-      throw new Exception("Could not delete chlids of given Id !!");
-    }
-  }
+      $exceptionMessageFormat = [
+        "status" => "false",
+        "statusCode" => "409",
+        "message" => [
+          "validation" => false,
+          "message" => []
+        ]
+      ];
+      //check if id is provided
+      $idToDelete = $_GET["id"];
+      if (empty($idToDelete)) {
+        $exceptionMessageFormat["message"]["message"]["id"] = "Id is required  to delete !!";
+        return $exceptionMessageFormat;
 
-    return [
-      "status" => true ,
-      "message" => "Data deleted successfully !",
-      "data" => [
-        "id" => $idToDelete
-      ]
-    ];
-  }catch(Exception $e){
-    return [
-      "status" => false ,
-      "message" => $e->getMessage(),
-      "data" => []
-    ];
+      }
+
+      //getting data that needs to be deleted to chek if its parent of sub category
+      $result = $categoryObj->getById($idToDelete);
+
+      //check if the id is sub category id and delete directly if its child
+      if ($result['data']['parent'] != null) {
+        //reaches here if its jsut sub category
+        $result = $categoryObj->delete($idToDelete);
+      } else {
+        //if it reaches here means id is parent id
+        // so delete parent first
+        $result1 = $categoryObj->delete($idToDelete);
+        if (!$result1["status"]) {
+          $exceptionMessageFormat["message"]["message"]["id"] = "Could not delete parent !!";
+          return $exceptionMessageFormat;
+         
+        }
+        //delet all child of the parent ID
+        $result2 = $categoryObj->deleteChildBasedOnParentId($idToDelete);
+        if (!$result2["status"]) {
+          $exceptionMessageFormat["message"]["message"]["id"] = "Could not delete chlids of given Id !!";
+        return $exceptionMessageFormat;
+         
+        }
+      }
+
+      return [
+        "status" => true,
+        "message" => "Data deleted successfully !",
+        "data" => [
+          "id" => $idToDelete
+        ]
+      ];
+    } catch (Exception $e) {
+      return [
+        "status" => false,
+        "message" => $e->getMessage(),
+        "data" => []
+      ];
+    }
   }
-}
 }

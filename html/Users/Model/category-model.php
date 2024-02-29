@@ -23,7 +23,7 @@ class Category
    ";
 
    if($excludeId != NULL){
-    $sql .=" WHERE id != '$excludeId' 
+    $sql .="AND  id != '$excludeId' 
     ";
    }
    $result = $this->DBconn->conn->query($sql);
