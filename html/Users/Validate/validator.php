@@ -226,10 +226,10 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
 
       if(in_array('locationFormat',$value)){
       
-        if(preg_match('/^[A-Za-z0-9\s]+$/',$data[$key])){
+        if (preg_match('/^[A-Za-z0-9]+$/', $data[$key])) {
           continue;
         }else{
-          $validateData[$key] = [$key . " should contain only alphanumeric characters."];
+          $validateData[$key] = [$key . " should contain only alphanumerals."];
         }
       }
 

@@ -46,7 +46,7 @@ class LocationRequestHandlers implements Authorizer
     if ($auhtorize["status"] === false) {
       return $auhtorize;
     }
-    
+
     $locationObj = new Location(new DBConnect());
     $jsonData = file_get_contents('php://input');
     $decodedData = json_decode($jsonData, true);
@@ -66,16 +66,19 @@ class LocationRequestHandlers implements Authorizer
     }
 
     $checkIfLocationExists = $locationObj->get($decodedData["location"]);
+   
     if ($checkIfLocationExists["status"] === "true") {
       return [
         "status" => "false",
         "statusCode" => 403,
         "message" => "Location alredy exists",
-        "data" => []
+        "data" => [
+          "id"=>$checkIfLocationExists["data"]["id"]
+          ]
       ];
     }
     $response = $locationObj->create($jsonData);
-
+    $decodedData["id"] = $response["data"]["id"];
     if ($response["status"] === "false") {
       return [
         "status" => "false",

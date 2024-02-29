@@ -84,7 +84,10 @@ class Location {
 
       return[
         "status" => "true",
-        "message" => "Location created successfully!"
+        "message" => "Location created successfully!",
+        "data" =>[
+          "id"=> $this->DBConn->conn->insert_id
+        ]
       ];
 
     }catch(Exception $e){
