@@ -1,0 +1,31 @@
+version: '3.1'
+services:
+  amsweb:
+    container_name: AMSWEB
+    image: intuji/apache-php:8.2
+    expose:
+      - 80
+    ports:
+      - 8080:80
+    depends_on:
+      - amsdb
+    volumes:
+      - ./html:/var/www/html
+    environment:
+      MYSQL_HOST: amsdb
+      MYSQL_USER: sanchay
+      MYSQL_PASSWORD: sanchay
+
+  amsdb:
+    container_name: AMSDB
+    restart: always
+    image: mysql:8
+    volumes:
+      - ./db:/var/lib/mysql
+    expose:
+      - 3306
+    environment:
+      MYSQL_ROOT_PASSWORD: toor
+      MYSQL_USER: sanchay
+      MYSQL_PASSWORD: sanchay
+      MYSQL_DATABASE: ams
