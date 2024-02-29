@@ -137,7 +137,7 @@ class Assets
         }
 
         return [
-            "total data" => $total_rows,
+            "total data" => $totalData,
             "data" => $data
         ];
     }

@@ -168,14 +168,13 @@ class Procurement
 
         $data = $result->fetch_all(MYSQLI_ASSOC);
         $total_rows = $result->num_rows;
-
         if ($total_rows == 0) {
 
             throw new \Exception("No data found for the provided search term.");
         }
 
         return [
-            "total data" => $total_rows,
+            "total data" => $totalData,
             "data" => $data
         ];
     }
@@ -318,7 +317,7 @@ class Procurement
 
             $procurementData = [
                 'requested_by_id' => $data['requested_by_id'],
-                'status' => ucfirst($data['status']),
+                'status' => $data['status'],
                 'request_urgency' => $data['request_urgency'],
                 // 'approved_by_id' => $data['approved_by_id'],
             ];
@@ -392,18 +391,18 @@ class Procurement
         }
     }
 
-    private function getTotalDataCount( $search, $filters)
+    private function getTotalDataCount($search, $filters)
     {
         $sql = "SELECT COUNT(*) AS total_count FROM 
         procurements pr
-   LEFT  JOIN 
+        LEFT  JOIN 
         user u_requested ON pr.requested_by_id = u_requested.id
-   LEFT JOIN 
+        LEFT JOIN 
         user u_approved ON pr.approved_by_id = u_approved.id
-   WHERE 1=1"; // Start the WHERE clause
-           
+        WHERE 1=1"; // Start the WHERE clause
 
-           if (!empty($search)) {
+
+        if (!empty($search)) {
             $columns = ['u_requested.name', 'pr.status', 'u_approved.name', 'pr.approved_date'];
             $searchConditions = [];
 
@@ -446,8 +445,6 @@ class Procurement
 
         $row = $result->fetch_assoc();
         $total_count = $row['total_count'];
-
         return $total_count;
     }
-
 }
