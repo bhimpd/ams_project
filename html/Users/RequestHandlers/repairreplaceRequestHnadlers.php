@@ -8,15 +8,17 @@ use Model\Repairreplace;
 use Validate\Validator;
 use Middleware\Authorization;
 
-class RepairreplaceRequestHandlers
+class RepairreplaceRequestHandlers implements Authorizer
 {
-  public static function get()
+  public static function run()
   {
-    //token verification
+    //reuseable function for authorization in /repairreplace
+
+
     $response = Authorization::verifyToken();
     if (!$response["status"]) {
       return [
-        "status" => $response["status"],
+        "status" => false,
         "statusCode" => 401,
         "message" => $response["message"],
         "data" => $response["data"]
@@ -30,6 +32,15 @@ class RepairreplaceRequestHandlers
         "message" => "User unauthorised",
         "data" => $response["data"]
       ];
+    }
+  }
+
+  public static function get()
+  {
+    //token and role check 
+    $auhtorize = self::run();
+    if ($auhtorize["status"] === false) {
+      return $auhtorize;
     }
 
     //database object and model object creation

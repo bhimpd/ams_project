@@ -13,17 +13,19 @@ use ImageValidation\Imagevalidator;
 /**
  * handles all users related requests like user create/edit/delete 
  */
-class UserRequestHandlers
+class UserRequestHandlers implements Authorizer
 {
-  public static function getUser()
+  //reuseable function for authorization in /user
+  public static function run()
   {
+    //Authorizaiton
     $response = Authorization::verifyToken();
     if (!$response["status"]) {
       return [
         "status" => false,
-        "statusCode" => "401",
+        "statusCode" => 401,
         "message" => $response["message"],
-        "data" => []
+        "data" => $response["data"]
       ];
     }
     //checks if user is not admin
@@ -35,6 +37,16 @@ class UserRequestHandlers
         "data" => $response["data"]
       ];
     }
+  }
+  public static function getUser()
+  {
+    //token and role check 
+    $auhtorize = self::run();
+    if ($auhtorize["status"] === false) {
+      return $auhtorize;
+    }
+
+
     $id = $_GET["id"] ?? NULL;
     $username = $_GET["username"] ?? NULL;
     if ($id == NULL && $username == NULL) {
@@ -42,9 +54,17 @@ class UserRequestHandlers
     }
     return self::getByIdOrUsername();
   }
+
+  //gets all the users
   public static function getAllUser()
   {
     try {
+      //token and role check 
+      $auhtorize = self::run();
+      if ($auhtorize["status"] === false) {
+        return $auhtorize;
+      }
+
       $userObj = new User(new DBConnect());
       $result = $userObj->getAll();
       if (!$result) {
@@ -63,13 +83,10 @@ class UserRequestHandlers
         "message" => "Data extraceted.",
         "data" => $result
       ];
-    } finally {
-      $userObj->DBconn->disconnectFromDatabase();
     }
   }
-  /** 
-   * takes auth  ,verifies , gives  response
-   */
+
+
   public static function getByIdOrUsername()
   {
     $userObj = new User(new DBConnect());
@@ -98,26 +115,32 @@ class UserRequestHandlers
   public static function createUser()
   {
     try {
+      //token and role check
+      $auhtorize = self::run();
+      if ($auhtorize["status"] === false) {
+        return $auhtorize;
+      }
+
+      //object of User model where database object is injected
       $userObj = new User(new DBConnect());
 
-      //taking image 
+      //taking image first
+      if (isset($_FILES['user_image'])) {
+        $image = $_FILES['user_image'];
 
-      if (isset($_FILES['assets_image'])) {
-        $image = $_FILES['assets_image'];
-       
         if ($image['error'] !== UPLOAD_ERR_OK) {
-            throw new Exception("Failed to upload image");
+          throw new Exception("Failed to upload image");
         }
 
         $image_validation = Imagevalidator::imagevalidation($image);
 
         if (!$image_validation["status"]) {
-            return [
-                "status" => false,
-                "statusCode" => "422",
-                "message" => "image validation failed",
-                "error" => $image_validation["message"]
-            ];
+          return [
+            "status" => false,
+            "statusCode" => "422",
+            "message" => "image validation failed",
+            "error" => $image_validation["message"]
+          ];
         }
 
         $imageName = uniqid() . '_' . $image['name'];
@@ -125,53 +148,52 @@ class UserRequestHandlers
         $uploadedFilePath = $uploadDirectory . $imageName;
 
         $relativeImagePath = 'public/employees/uploaded_images/' . $imageName;
-        $decodedData['image_name'] = $relativeImagePath;
+
 
         if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
-            throw new Exception("Failed to move uploaded file");
+          print_r($uploadedFilePath);
+          throw new Exception("Failed to move uploaded file");
         }
-    } else {
+      } else {
         throw new Exception("No image file uploaded");
-    }
+      }
 
 
       //TAKING USER PROVIDED DATA
-      
+
       // Define the list of expected form-data parameters
-$parameters = ['name', 'job_type', 'designation', 'department', 'email', 'phone_number', 'user_type'];
+      $parameters = ['name', 'job_type', 'designation', 'department', 'email', 'phone_number'];
 
-// Initialize an empty array to store the parameter values
-$formData = [];
+      // Initialize an empty array to store the parameter values
+      $formData = [];
 
-// Loop through the expected parameters and fetch their values from $_POST
-foreach ($parameters as $param) {
-    $formData[$param] = isset($_POST[$param]) ? $_POST[$param] : '';
-}
-
+      // Loop through the expected parameters and fetch their values from $_POST
+      foreach ($parameters as $param) {
+        if (isset($_POST[$param])) {
+          $formData[$param] = $_POST[$param];
+        }
+      }
 
 
       $decodedData = $formData;
-
-        print_r($decodedData);
-
-      die("fasdjkh here doing : dynamically fetching form form data for user creration with the goal to upload image into photo section of database ,,,,chck the table query");
+      //putting image path in decoded data
+      $decodedData['user_image'] = $relativeImagePath;
 
       //explicitly assignning employee as user_type so that admin can only be created from database
       $decodedData["user_type"] = "employee";
       $jsonData = json_encode($decodedData);
 
 
-      
 
       //VALIDATION OF PROVIDED DATA
       $keys = [
-        'name' => ['required' , 'empty' ,'maxLength', 'minLength'],
-        'job_type' => ['required' , 'empty'], 
-        'designation' => ['required' , 'empty' ,'designationFormat'],
-        'department' =>['required' , 'empty' ,'maxLength', 'minLength' ],
-        'email' => ['required' , 'empty' ,'maxLength', 'minLength','emailFormat'],
-        'phone_number'=>['required' , 'empty' ,'maxLength', 'minLength','phone_numberFormat'],
-       
+        'name' => ['required', 'empty', 'maxLength', 'minLength'],
+        'job_type' => ['required', 'empty'],
+        'designation' => ['required', 'empty', 'designationFormat'],
+        'department' => ['required', 'empty', 'maxLength', 'minLength'],
+        'email' => ['required', 'empty', 'maxLength', 'minLength', 'emailFormat'],
+        'phone_number' => ['required', 'empty', 'maxLength', 'minLength', 'phone_numberFormat'],
+
       ];
 
       $validationResult = Validator::validate($decodedData, $keys);
@@ -183,25 +205,25 @@ foreach ($parameters as $param) {
         ];
       }
       //checking if email already exists
-      
+
       $dynamicQuery = new DynamicQuery(new DBConnect);
 
-      $queryResponse = $dynamicQuery->get("user" , "email" , $decodedData["email"]);
-     if(!$queryResponse["data"]["nor"] < 1){
-      
-      throw  new Exception ("Email already exists !!");
-     }
-    
-      $result = $userObj->create($jsonData);
-   
-   //injecting id into response from $result
-    $decodedData["id"] = $result["data"]["id"];
+      $queryResponse = $dynamicQuery->get("user", "email", $decodedData["email"]);
+      if (!$queryResponse["data"]["nor"] < 1) {
+
+        throw new Exception("Email already exists !!");
+      }
+
+      $result = $userObj->create(json_encode($decodedData, true));
+
+      //injecting id into response from $result
+      $decodedData["id"] = $result["data"]["id"];
       if (!$result) {
         return [
           "status" => false,
           "statusCode" => "409",
           "message" => "Unable to create user",
-          "data" =>$decodedData
+          "data" => $decodedData
         ];
       }
       return [
@@ -355,9 +377,6 @@ foreach ($parameters as $param) {
         "status" => false,
         "message" => $e->getMessage()
       ];
-    } finally {
-      //disconnecting from database
-      $userObj->DBconn->disconnectFromDatabase();
     }
   }
 }

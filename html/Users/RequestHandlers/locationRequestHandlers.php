@@ -9,33 +9,44 @@ use Configg\DBConnect;
 use Middleware\Authorization;
 
 
-class LocationRequestHandlers
+class LocationRequestHandlers implements Authorizer
 {
+  public static function run()
+  {
+    //reuseable function for authorization in /location
+
+
+    $response = Authorization::verifyToken();
+    if (!$response["status"]) {
+      return [
+        "status" => false,
+        "statusCode" => 401,
+        "message" => $response["message"],
+        "data" => $response["data"]
+      ];
+    }
+    //checks if user is not admin
+    if ($response["data"]["user_type"] !== "admin") {
+      return [
+        "status" => false,
+        "statusCode" => 401,
+        "message" => "User unauthorised",
+        "data" => $response["data"]
+      ];
+    }
+  }
   /**
    * @return array
    * Takes data as json , validates , checks if already exists and Creates location in database
    */
   public static function createLocation(): array
   {
-      //Authorizaiton
-      $response = Authorization::verifyToken();
-      if (!$response["status"]) {
-        return [
-          "status" => $response["status"],
-          "statusCode" => 401,
-          "message" => $response["message"],
-          "data" => $response["data"]
-        ];
-      }
-      //checks if user is not admin
-      if ($response["data"]["user_type"] !== "admin") {
-        return [
-          "status" => false,
-          "statusCode" => 401,
-          "message" => "User unauthorised",
-          "data" => $response["data"]
-        ];
-      }
+      //token and role check 
+    $auhtorize = self::run();
+    if ($auhtorize["status"] === false) {
+      return $auhtorize;
+    }
+    
     $locationObj = new Location(new DBConnect());
     $jsonData = file_get_contents('php://input');
     $decodedData = json_decode($jsonData, true);
