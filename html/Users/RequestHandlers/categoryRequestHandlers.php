@@ -346,6 +346,7 @@ class CategoryRequestHandlers implements Authorizer
       }
       $categoryObj = new Category(new DBConnect());
 
+      //format for sending erro message
       $exceptionMessageFormat = [
         "status" => "false",
         "statusCode" => "409",

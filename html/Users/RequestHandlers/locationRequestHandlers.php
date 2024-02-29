@@ -111,14 +111,24 @@ class LocationRequestHandlers implements Authorizer
 
       //sorting 
 
-//empty array to store filter-sort... parameters
-    $callingParameters = [];
+      //empty array to store filter-sort... parameters
+      $callingParameters = [];
 
- // Define the list of parameters to check
- $parametersToCheck = ["orderby", "sortorder", ];
+      // Define the list of parameters to check
+      $parametersToCheck = ["orderby", "sortorder",];
+      // dynamically set if data is coming from frontend and is not empty
+      foreach ($parametersToCheck as $param) {
+        // Check if the parameter is set in $_GET
+        if (isset($_GET[$param])) {
+          // Push the parameter into $callingParameters
+
+          $callingParameters[$param] = $_GET[$param];
+
+        }
+      }
 
 
-      $response = $locationObj->getAll();
+      $response = $locationObj->getAll($callingParameters);
       if (!$response['status']) {
         throw new Exception("Unable to fetch from database!!");
       }
@@ -143,7 +153,7 @@ class LocationRequestHandlers implements Authorizer
   public static function updateLocation()
   {
     try {
-      
+
       //token and role check 
       $auhtorize = self::run();
       if ($auhtorize["status"] === false) {
@@ -182,7 +192,7 @@ class LocationRequestHandlers implements Authorizer
 
         throw new Exception("Id does not exists !!");
       }
-     
+
       //checking new if new name already exsist in database
       $checkIfNewNameAlreadyExists = $locationObj->get($decodedData["newLocation"]);
 
@@ -227,14 +237,14 @@ class LocationRequestHandlers implements Authorizer
       $jsonData = file_get_contents("php://input");
       $decodedData = json_decode($jsonData, true);
 
-       if (isset($_GET["id"])) {
+      if (isset($_GET["id"])) {
         $decodedData["id"] = $_GET["id"];
       }
 
       //validation
       $keys = [
         "id" => ['required', 'empty'],
-       
+
       ];
 
       $validationResult = Validator::validate($decodedData, $keys);

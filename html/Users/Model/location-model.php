@@ -14,12 +14,20 @@ class Location {
   /**
    * gets all from location table
    */
-  public function getAll()
+  public function getAll(...$options)
   {
     try{
+      $defaultOptions = [
+        "orderby" => "id",
+        "sortorder" => "ASC",
+      ];
+      $parameters = array_merge($defaultOptions, ...$options);
       $sql = "
         SELECT * FROM location
       ";
+
+       //orderby and sort order part
+       $sql .= " ORDER BY `$parameters[orderby]` $parameters[sortorder] ";
       $result = $this->DBConn->conn->query($sql);
       if (!$result->num_rows > 0) {
         throw new Exception("Cannot get form database!!");
