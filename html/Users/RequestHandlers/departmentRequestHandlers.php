@@ -8,19 +8,17 @@ use Model\Department;
 use Configg\DBConnect;
 use Middleware\Authorization;
 
-class DepartmentRequestHandlers
+class DepartmentRequestHandlers implements Authorizer
 {
-  /**
-   * @return array
-   * Takes data as json , validates , checks if already exists and Creates department in database
-   */
-  public static function createDepartment(): array
+  public static function run()
   {
-    //Authorizaiton
+    //reuseable function for authorization in /location
+
+
     $response = Authorization::verifyToken();
     if (!$response["status"]) {
       return [
-        "status" => $response["status"],
+        "status" => false,
         "statusCode" => 401,
         "message" => $response["message"],
         "data" => $response["data"]
@@ -35,12 +33,25 @@ class DepartmentRequestHandlers
         "data" => $response["data"]
       ];
     }
+  }
+  /**
+   * @return array
+   * Takes data as json , validates , checks if already exists and Creates department in database
+   */
+  public static function createDepartment(): array
+  {
+    //token and role check 
+    $auhtorize = self::run();
+    if ($auhtorize["status"] === false) {
+      return $auhtorize;
+    }
+
     $departmentObj = new Department(new DBConnect());
     $jsonData = file_get_contents('php://input');
     $decodedData = json_decode($jsonData, true);
 
     $keys = [
-      'department' => [ 'required','empty','departmentFormat']
+      'department' => ['required', 'empty', 'departmentFormat']
     ];
     $validationResult = Validator::validate($decodedData, $keys);
 
@@ -60,10 +71,13 @@ class DepartmentRequestHandlers
         "status" => "false",
         "statusCode" => 403,
         "message" => "Department alredy exists",
-        "data" => []
+        "data" => [
+          "id" => $checkIfDepartmentExists["data"]["id"]
+        ]
       ];
     }
     $response = $departmentObj->create($jsonData);
+    $decodedData["id"] = $response["data"]["id"];
 
     if ($response["status"] === "false") {
       return [
@@ -88,27 +102,32 @@ class DepartmentRequestHandlers
   public static function getAllDepartment(): array
   {
     try {
-      //Authorizaiton
-      $response = Authorization::verifyToken();
-      if (!$response["status"]) {
-        return [
-          "status" => $response["status"],
-          "statusCode" => 401,
-          "message" => $response["message"],
-          "data" => $response["data"]
-        ];
+
+      //token and role check 
+      $auhtorize = self::run();
+      if ($auhtorize["status"] === false) {
+        return $auhtorize;
       }
-      //checks if user is not admin
-      if ($response["data"]["user_type"] !== "admin") {
-        return [
-          "status" => false,
-          "statusCode" => 401,
-          "message" => "User unauthorised",
-          "data" => $response["data"]
-        ];
-      }
+
       $departmentObj = new Department(new DBConnect());
-      $response = $departmentObj->getAll();
+
+      //empty array to store filter-sort... parameters
+      $callingParameters = [];
+
+      // Define the list of parameters to check
+      $parametersToCheck = ["orderby", "sortorder",];
+      // dynamically set if data is coming from frontend and is not empty
+      foreach ($parametersToCheck as $param) {
+        // Check if the parameter is set in $_GET
+        if (isset($_GET[$param])) {
+          // Push the parameter into $callingParameters
+
+          $callingParameters[$param] = $_GET[$param];
+
+        }
+      }
+
+      $response = $departmentObj->getAll($callingParameters);
       if (!$response['status']) {
         throw new Exception("Unable to fetch from database!!");
       }
@@ -133,33 +152,24 @@ class DepartmentRequestHandlers
   public static function updateDepartment()
   {
     try {
-      //Authorizaiton
-      $response = Authorization::verifyToken();
-      if (!$response["status"]) {
-        return [
-          "status" => $response["status"],
-          "statusCode" => 401,
-          "message" => $response["message"],
-          "data" => $response["data"]
-        ];
+      //token and role check 
+      $auhtorize = self::run();
+      if ($auhtorize["status"] === false) {
+        return $auhtorize;
       }
-      //checks if user is not admin
-      if ($response["data"]["user_type"] !== "admin") {
-        return [
-          "status" => false,
-          "statusCode" => 401,
-          "message" => "User unauthorised",
-          "data" => $response["data"]
-        ];
-      }
+
       $departmentObj = new Department(new DBConnect());
       $jsonData = file_get_contents("php://input");
       $decodedData = json_decode($jsonData, true);
 
+      if (isset($_GET["id"])) {
+        $decodedData["id"] = $_GET["id"];
+      }
+
       //validation
       $keys = [
-        "previousDepartment" => ['empty', 'required'],
-        "newDepartment" => ['required','empty', 'departmentFormat']
+        "id" => ['required', 'empty'],
+        "newDepartment" => ['required', 'empty', 'departmentFormat']
       ];
 
       $validationResult = Validator::validate($decodedData, $keys);
@@ -173,18 +183,37 @@ class DepartmentRequestHandlers
           "data" => $decodedData
         ];
       }
+      //check if the id exists in database
+      $checkIfIdExists = $departmentObj->getById($decodedData["id"]);
 
-      //check if is present in database
-      $result = $departmentObj->get($decodedData["previousDepartment"]);
+      $exceptionMessageFormat = [
+        "status" => "false",
+        "statusCode" => "409",
+        "message" => [
+          "validation" => false,
+          "message" => []
+        ]
+      ];
 
-      if ($result["status"] == "false") {
-        throw new Exception("Department not found in database to update!!");
+      //if status is true , location name already exists
+      if ($checkIfIdExists["status"] == "false") {
+        $exceptionMessageFormat["message"]["message"]["id"] = "Id not found in database !!";
+        return $exceptionMessageFormat;
+      }
+      //checking new if new name already exsist in database
+      $checkIfNewNameAlreadyExists = $departmentObj->get($decodedData["newDepartment"]);
+
+      //if status is true , location name already exists
+      if ($checkIfNewNameAlreadyExists["status"] == "true") {
+        $exceptionMessageFormat["message"]["message"]["newLocation"] = "New name provided already exists !!";
+        return $exceptionMessageFormat;
       }
 
       $response = $departmentObj->updateDepartment($decodedData);
 
       if (!$response["status"]) {
-        throw new Exception("Unalbe to update deaprtment in database!!");
+        $exceptionMessageFormat["message"]["message"]["newLocation"] = "Unalbe to update in database!!";
+        return $exceptionMessageFormat;
       }
       return [
         "status" => $response["status"],
@@ -206,24 +235,11 @@ class DepartmentRequestHandlers
   public static function deleteDepartment(): array
   {
     try {
-      //Authorizaiton
-      $response = Authorization::verifyToken();
-      if (!$response["status"]) {
-        return [
-          "status" => $response["status"],
-          "statusCode" => 401,
-          "message" => $response["message"],
-          "data" => $response["data"]
-        ];
-      }
-      //checks if user is not admin
-      if ($response["data"]["user_type"] !== "admin") {
-        return [
-          "status" => false,
-          "statusCode" => 401,
-          "message" => "User unauthorised",
-          "data" => $response["data"]
-        ];
+   
+      //token and role check 
+      $auhtorize = self::run();
+      if ($auhtorize["status"] === false) {
+        return $auhtorize;
       }
       $departmentObj = new Department(new DBConnect());
       $jsonData = file_get_contents("php://input");
@@ -231,7 +247,7 @@ class DepartmentRequestHandlers
 
       //validation
       $keys = [
-        "department" => [ 'required' ,'empty' ]
+        "department" => ['required', 'empty']
       ];
       $validationResult = Validator::validate($decodedData, $keys);
       if (!$validationResult["validate"]) {
@@ -243,21 +259,33 @@ class DepartmentRequestHandlers
         ];
       }
       //check if its in database
-      //check if is present in database
-      $result = $departmentObj->get($decodedData["department"]);
 
-      if ($result["status"] == "false") {
-        throw new Exception("Department not found in database to delete!!");
+       //check if the id exists in database
+       $checkIfIdExists = $departmentObj->getById($decodedData["id"]);
+       $exceptionMessageFormat = [
+         "status" => "false",
+         "statusCode" => "409",
+         "message" => [
+           "validation" => false,
+           "message" => []
+         ]
+       ];
+       //if status is true , location name already exists
+       if ($checkIfIdExists["status"] == "false") {
+        $exceptionMessageFormat["message"]["message"]["id"] = "Id not found in database !!";
+        return $exceptionMessageFormat;
       }
 
-      $response = $departmentObj->deleteDepartment($decodedData);
+     
+ //calling model function to delete department  using id provided
+ $response = $departmentObj->deleteLocationById($decodedData["id"]);
+
+     
       if (!$response["status"]) {
-        return [
-          "status" => $response["status"],
-          "message" => $response["message"],
-          "statusCode" => 500
-        ];
+        $exceptionMessageFormat["message"]["message"]["id"] = "$response[message]";
+        return $exceptionMessageFormat;
       }
+
       return [
         "status" => $response["status"],
         "statusCode" => 200,

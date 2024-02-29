@@ -108,7 +108,27 @@ class LocationRequestHandlers implements Authorizer
         return $auhtorize;
       }
       $locationObj = new Location(new DBConnect());
-      $response = $locationObj->getAll();
+
+      //sorting 
+
+      //empty array to store filter-sort... parameters
+      $callingParameters = [];
+
+      // Define the list of parameters to check
+      $parametersToCheck = ["orderby", "sortorder",];
+      // dynamically set if data is coming from frontend and is not empty
+      foreach ($parametersToCheck as $param) {
+        // Check if the parameter is set in $_GET
+        if (isset($_GET[$param])) {
+          // Push the parameter into $callingParameters
+
+          $callingParameters[$param] = $_GET[$param];
+
+        }
+      }
+
+
+      $response = $locationObj->getAll($callingParameters);
       if (!$response['status']) {
         throw new Exception("Unable to fetch from database!!");
       }
@@ -133,7 +153,7 @@ class LocationRequestHandlers implements Authorizer
   public static function updateLocation()
   {
     try {
-      
+
       //token and role check 
       $auhtorize = self::run();
       if ($auhtorize["status"] === false) {
@@ -166,26 +186,35 @@ class LocationRequestHandlers implements Authorizer
       }
       //check if the id exists in database
       $checkIfIdExists = $locationObj->getById($decodedData["id"]);
+      $exceptionMessageFormat = [
+        "status" => "false",
+        "statusCode" => "409",
+        "message" => [
+          "validation" => false,
+          "message" => []
+        ]
+      ];
 
       //if status is true , location name already exists
       if ($checkIfIdExists["status"] == "false") {
-
-        throw new Exception("Id does not exists !!");
+        $exceptionMessageFormat["message"]["message"]["id"] = "Id not found in database !!";
+        return $exceptionMessageFormat;
       }
-     
+
       //checking new if new name already exsist in database
       $checkIfNewNameAlreadyExists = $locationObj->get($decodedData["newLocation"]);
 
       //if status is true , location name already exists
       if ($checkIfNewNameAlreadyExists["status"] == "true") {
-
-        throw new Exception("New name provided already exists !!");
+        $exceptionMessageFormat["message"]["message"]["newLocation"] = "New name provided already exists !!";
+        return $exceptionMessageFormat;
       }
 
       $response = $locationObj->updateLocation($decodedData);
 
       if (!$response["status"]) {
-        throw new Exception("Unalbe to update in database!!");
+        $exceptionMessageFormat["message"]["message"]["newLocation"] = "Unalbe to update in database!!";
+       return $exceptionMessageFormat;
       }
       return [
         "status" => $response["status"],
@@ -217,14 +246,14 @@ class LocationRequestHandlers implements Authorizer
       $jsonData = file_get_contents("php://input");
       $decodedData = json_decode($jsonData, true);
 
-       if (isset($_GET["id"])) {
+      if (isset($_GET["id"])) {
         $decodedData["id"] = $_GET["id"];
       }
 
       //validation
       $keys = [
         "id" => ['required', 'empty'],
-       
+
       ];
 
       $validationResult = Validator::validate($decodedData, $keys);
@@ -240,18 +269,26 @@ class LocationRequestHandlers implements Authorizer
       }
       //check if the id exists in database
       $checkIfIdExists = $locationObj->getById($decodedData["id"]);
-
+      $exceptionMessageFormat = [
+        "status" => "false",
+        "statusCode" => "409",
+        "message" => [
+          "validation" => false,
+          "message" => []
+        ]
+      ];
       //if status is true , location name already exists
       if ($checkIfIdExists["status"] == "false") {
-
-        throw new Exception("Id does not exists !!");
+        $exceptionMessageFormat["message"]["message"]["id"] = "Id not found in database !!";
+        return $exceptionMessageFormat;
       }
 
       //calling model function to delete locaotion  using id provided
       $response = $locationObj->deleteLocationById($decodedData["id"]);
 
       if (!$response["status"]) {
-        throw new Exception($response["message"]);
+        $exceptionMessageFormat["message"]["message"]["id"] = "$response[message]";
+        return $exceptionMessageFormat;
       }
       return [
         "status" => $response["status"],

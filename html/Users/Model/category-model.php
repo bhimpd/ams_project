@@ -15,12 +15,17 @@ class Category
   }
 
   //gets the data by name 
-  //used when names are updated with already existing names
-  public function getByName($name){
+  //used when names are updated with already existing names , also takes $excludeId whic will exclude search in provided id
+  public function getByName($name , $excludeId = NULL){
     try{
       $sql = "
    SELECT * from category WHERE category_name = '$name'
    ";
+
+   if($excludeId != NULL){
+    $sql .="AND  id != '$excludeId' 
+    ";
+   }
    $result = $this->DBconn->conn->query($sql);
    $row = $result->fetch_assoc();
   

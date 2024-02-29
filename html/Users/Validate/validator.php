@@ -226,6 +226,12 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
 
       if(in_array('locationFormat',$value)){
       
+        if (preg_match('/^\s|\s$/', $data[$key])) {
+          // There is a space at the beginning or end of the string
+          $validateData[$key] = [$key . ": No spaces allowed in start and end."];
+        }
+      
+
         if (preg_match('/^[A-Za-z0-9]+$/', $data[$key])) {
           continue;
         }else{
@@ -234,6 +240,10 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
       }
 
       if(in_array('departmentFormat',$value)){
+        if (preg_match('/^\s|\s$/', $data[$key])) {
+          // There is a space at the beginning or end of the string
+          $validateData[$key] = [$key . ": No spaces allowed in start and end."];
+        }
       
         if(preg_match('/^[A-Za-z\s]+$/',$data[$key])){
           continue;
