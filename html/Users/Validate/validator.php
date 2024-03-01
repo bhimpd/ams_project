@@ -59,7 +59,7 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
           "category_name" => 64,
           "parent" => 64,
           "department" => 32,
-          "phone_numebr" => 15,
+          "phone_number" => 15,
           "designation" => 64,
           "location" => 64,
           "brand"=>16
@@ -82,7 +82,7 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
           "password" => "8",
           "username" => 4,
           "email" => 7,
-          "name" => 4,
+          "name" => 2,
           "category_name" => 1,
           "parent" => 1,
           "department" => 1,
@@ -218,23 +218,36 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
       if (in_array("parent_categoryFormat", $value)) {
         if (preg_match('/^[A-Za-z0-9]+$/', $data[$key])) {
           continue;
-        } else {
-          $validateData[$key] = [$key . " should contain only alphabets."];
+
+        }else{
+          $validateData[$key] = [$key . " should contain only alphanumerals."];
         }
       }
 
-      if (in_array('locationFormat', $value)) {
+      if(in_array('locationFormat',$value)){
+      
+        if (preg_match('/^\s|\s$/', $data[$key])) {
+          // There is a space at the beginning or end of the string
+          $validateData[$key] = [$key . ": No spaces allowed in start and end."];
+        }
+      
 
-        if (preg_match('/^[A-Za-z0-9\s]+$/', $data[$key])) {
+        if (preg_match('/^[A-Za-z0-9]+$/', $data[$key])) {
           continue;
-        } else {
-          $validateData[$key] = [$key . " should contain only alphanumeric characters."];
+        }else{
+          $validateData[$key] = [$key . " should contain only alphanumerals."];
         }
       }
 
-      if (in_array('departmentFormat', $value)) {
+      if(in_array('departmentFormat',$value)){
+        if (preg_match('/^\s|\s$/', $data[$key])) {
+          // There is a space at the beginning or end of the string
+          $validateData[$key] = [$key . ": No spaces allowed in start and end."];
+        }
+      
+        if(preg_match('/^[A-Za-z\s]+$/',$data[$key])){
 
-        if (preg_match('/^[A-Za-z\s]+$/', $data[$key])) {
+     
           continue;
         } else {
           $validateData[$key] = [$key . " should contain only alphabetical characters."];

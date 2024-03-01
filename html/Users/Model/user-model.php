@@ -34,7 +34,7 @@ class User
   public static function isJSON(string $jsonData)
   {
     json_decode($jsonData);
-    return (json_last_error() == JSON_ERROR_NONE);
+    return(json_last_error() == JSON_ERROR_NONE);
   }
 
 
@@ -172,18 +172,36 @@ class User
         throw new \Exception("Not json data");
 
       } else {
-        $data = json_decode($data, true);
-        //hashing the inserted password
-        $data["password"] = password_hash($data["password"], PASSWORD_BCRYPT);
-        $sql = "
-        INSERT INTO user 
-      (email , password , username,  name  , user_type)
-      VALUES
-      ('$data[email]' , '$data[password]' ,'$data[username]' ,'$data[name]' ,'$data[user_type]')
-      ";
 
+        $data = json_decode($data, true);
+
+        //if password field is set mean it came from signup route most probably
+        if (isset($data["password"])) {
+          //hashing the inserted password
+          $data["password"] = password_hash($data["password"], PASSWORD_BCRYPT);
+        }
+  
+        // Generating column names and values dynamically
+        $columns = implode(', ', array_keys($data));
+        $values = "'" . implode("', '", array_values($data)) . "'";
+
+        // Construct the SQL query
+        $sql = "INSERT INTO user ($columns) VALUES ($values)";
+ 
         $result = $this->DBconn->conn->query($sql);
-        return $result;
+
+       if(!$result){
+        throw new \Exception ("Unable to insert user into database");
+       }
+       $lastInsertedId = $this->DBconn->conn->insert_id;
+       
+        return [
+          "status " => true ,
+          "message" => "User created successfully !",
+          "data" => [
+            "id" => $lastInsertedId
+          ]
+        ];
       }
     } catch (\Exception $e) {
       return array(

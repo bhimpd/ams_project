@@ -14,12 +14,20 @@ class Location {
   /**
    * gets all from location table
    */
-  public function getAll()
+  public function getAll(...$options)
   {
     try{
+      $defaultOptions = [
+        "orderby" => "id",
+        "sortorder" => "ASC",
+      ];
+      $parameters = array_merge($defaultOptions, ...$options);
       $sql = "
         SELECT * FROM location
       ";
+
+       //orderby and sort order part
+       $sql .= " ORDER BY `$parameters[orderby]` $parameters[sortorder] ";
       $result = $this->DBConn->conn->query($sql);
       if (!$result->num_rows > 0) {
         throw new Exception("Cannot get form database!!");
@@ -42,7 +50,30 @@ class Location {
       ];
     }
   }
+public function getById($id){
+  try{
+    $sql = "SELECT * from location 
+    WHERE id = '$id'
+    ";
+    $result = $this->DBConn->conn->query($sql);
+    if (!$result->num_rows > 0) {
+      throw new Exception("Unable to fetch on the given  data");
+    } else {
+      return [
+        "status" => "true",
+        "message" => "Data extracted successfully!!",
+        "data" => $result->fetch_assoc()
+      ];
+    }
+  }catch(Exception $e){
+    return [
+      "status" => "false",
+      "message" => $e->getMessage(),
+      "data"=> []
+    ];
+  }
 
+}
   public function get(string $location){
     try{
       $sql = "SELECT * from location 
@@ -50,7 +81,7 @@ class Location {
       ";
       $result = $this->DBConn->conn->query($sql);
       if (!$result->num_rows > 0) {
-        throw new Exception("Unable to fetch the given id data");
+        throw new Exception("Unable to fetch on the given  data");
       } else {
         return [
           "status" => "true",
@@ -84,7 +115,10 @@ class Location {
 
       return[
         "status" => "true",
-        "message" => "Location created successfully!"
+        "message" => "Location created successfully!",
+        "data" =>[
+          "id"=> $this->DBConn->conn->insert_id
+        ]
       ];
 
     }catch(Exception $e){
@@ -103,7 +137,7 @@ class Location {
       $sql = "
         UPDATE location 
         SET location = '$dataToUpdate[newLocation]'
-        WHERE location = '$dataToUpdate[previousLocation]'
+        WHERE id = '$dataToUpdate[id]'
       ";
       $result = $this->DBConn->conn->query($sql);
 
@@ -122,26 +156,30 @@ class Location {
     }
   }
 
-  public function deleteLocation($dataToDelete):array{
+  public function deleteLocationById($id):array{
     try{
       $sql = "
         DELETE from location 
-        WHERE location = '$dataToDelete[location]'
+        WHERE id = '$id'
       ";
       $result = $this->DBConn->conn->query($sql);
       if(!$result){
         throw new Exception("Unable to delete parent from database!!");
       }
       return [
-        "status" => "true",
+        "status" => true,
         "message" => "Location deleted successfully.",
-        "data" => $dataToDelete
+        "data" => [
+          "id" => $id
+        ]
       ];
     }catch(Exception $e){
       return [
-        "status" => "false",
+        "status" => false,
         "message" => $e->getMessage(),
-        "data" => $dataToDelete
+        "data" => [
+          "id" => $id
+        ]
       ];
     }
   }

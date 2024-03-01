@@ -32,7 +32,10 @@ class Department
 
       return [
         "status" => "true",
-        "message" => "Department created successfully!"
+        "message" => "Department created successfully!",
+        "data"=> [
+          "id" =>  $this->DBConn->conn->insert_id
+        ]
       ];
 
     } catch (Exception $e) {
@@ -69,12 +72,22 @@ class Department
     }
   }
 
-  public function getAll()
+  public function getAll(...$options)
   {
     try {
+      $defaultOptions = [
+        "orderby" => "id",
+        "sortorder" => "ASC",
+      ];
+      $parameters = array_merge($defaultOptions, ...$options);
+
       $sql = "
         SELECT * FROM department
       ";
+
+       //orderby and sort order part
+       $sql .= " ORDER BY `$parameters[orderby]` $parameters[sortorder] ";
+
       $result = $this->DBConn->conn->query($sql);
       if (!$result->num_rows > 0) {
         throw new Exception("Cannot get department from database!!");
@@ -97,7 +110,30 @@ class Department
       ];
     }
   }
+public function getById($id){
+  try{
+    $sql = "SELECT * from department 
+    WHERE id = '$id'
+    ";
+    $result = $this->DBConn->conn->query($sql);
+    if (!$result->num_rows > 0) {
+      throw new Exception("Unable to fetch on the given  data");
+    } else {
+      return [
+        "status" => "true",
+        "message" => "Data extracted successfully!!",
+        "data" => $result->fetch_assoc()
+      ];
+    }
+  }catch(Exception $e){
+    return [
+      "status" => "false",
+      "message" => $e->getMessage(),
+      "data"=> []
+    ];
+  }
 
+}
   public function updateDepartment($dataToUpdate): array
   {
 
@@ -120,6 +156,33 @@ class Department
       return [
         "status" => "false",
         "message" => $e->getMessage()
+      ];
+    }
+  }
+  public function deleteLocationById($id):array{
+    try{
+      $sql = "
+        DELETE from department
+        WHERE id = '$id'
+      ";
+      $result = $this->DBConn->conn->query($sql);
+      if(!$result){
+        throw new Exception("Unable to delete  from database!!");
+      }
+      return [
+        "status" => true,
+        "message" => "Department deleted successfully.",
+        "data" => [
+          "id" => $id
+        ]
+      ];
+    }catch(Exception $e){
+      return [
+        "status" => false,
+        "message" => $e->getMessage(),
+        "data" => [
+          "id" => $id
+        ]
       ];
     }
   }

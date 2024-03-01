@@ -25,17 +25,7 @@ class Category
         break;
 
       case 'DELETE':
-        if (isset($_GET['childCategory'])) {
-          self::deleteChild();
-
-        } else if (isset($_GET['parentCategory'])) {
-          self::deleteParent();
-        } else {
-          Response::respondWithJson([
-            "status" => "false",
-            "message" => "Parameters are not provided!!"
-          ], 400);
-        }
+       self::delete();
         break;
     }
   }
@@ -52,24 +42,19 @@ class Category
     $response = CategoryRequestHandlers::update();
     Response::respondWithJson($response, $response["statusCode"]);
   }
-  public static function updateParent()
-  {
-    $response = CategoryRequestHandlers::updateParent();
+
+  public static function delete(){
+    $response = CategoryRequestHandlers::delete();
     Response::respondWithJson($response, $response["statusCode"]);
   }
-  public static function updateChild()
-  {
-    $response = CategoryRequestHandlers::updateChild();
-    Response::respondWithJson($response, $response["statusCode"]);
-  }
-  public static function deleteChild()
-  {
-    $response = CategoryRequestHandlers::deleteChild();
-    Response::respondWithJson($response, $response["statusCode"]);
-  }
-  public static function deleteParent(){
-    $response = CategoryRequestHandlers::deleteParent();
-    Response::respondWithJson($response, $response["statusCode"]);
-  }
+  // public static function deleteChild()
+  // {
+  //   $response = CategoryRequestHandlers::deleteChild();
+  //   Response::respondWithJson($response, $response["statusCode"]);
+  // }
+  // public static function deleteParent(){
+  //   $response = CategoryRequestHandlers::deleteParent();
+  //   Response::respondWithJson($response, $response["statusCode"]);
+  // }
 }
 
