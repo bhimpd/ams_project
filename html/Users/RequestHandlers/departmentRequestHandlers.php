@@ -203,9 +203,9 @@ class DepartmentRequestHandlers implements Authorizer
       //checking new if new name already exsist in database
       $checkIfNewNameAlreadyExists = $departmentObj->get($decodedData["newDepartment"]);
 
-      //if status is true , location name already exists
+      //if status is true , department name already exists
       if ($checkIfNewNameAlreadyExists["status"] == "true") {
-        $exceptionMessageFormat["message"]["message"]["newLocation"] = "New name provided already exists !!";
+        $exceptionMessageFormat["message"]["message"]["newDepartment"] = "New name provided already exists !!";
         return $exceptionMessageFormat;
       }
 
@@ -245,9 +245,14 @@ class DepartmentRequestHandlers implements Authorizer
       $jsonData = file_get_contents("php://input");
       $decodedData = json_decode($jsonData, true);
 
+      //getting id ffrom paramter
+      if (isset($_GET["id"])) {
+        $decodedData["id"] = $_GET["id"];
+      }
+
       //validation
       $keys = [
-        "department" => ['required', 'empty']
+        "id" => ['required', 'empty']
       ];
       $validationResult = Validator::validate($decodedData, $keys);
       if (!$validationResult["validate"]) {

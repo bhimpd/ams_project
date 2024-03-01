@@ -11,14 +11,14 @@ class DBConnect
   private $hostname;
   private $username;
   private $password;
-  private $database =  "ams"; //"mainams";
+  private $database = "ams"; //"ams"
 
   public $conn;
 
   //begins connection on object instantiation
   public function __construct()
   {
-    $this->hostname = "amsdb"; //"localhost";   //"amsdb";
+    $this->hostname = "amsdb";  //"amsdb";
     $this->username = "sanchay";    //"sanchay";
     $this->password = "sanchay";  //"sanchay";
     $this->connectToDatabase();
