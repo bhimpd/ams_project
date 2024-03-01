@@ -3,6 +3,7 @@ namespace RequestHandlers;
 
 use Exception;
 use Configg\DBConnect;
+use Helpers\FilterandSort;
 use Model\User;
 use Validate\Validator;
 use Middleware\Authorization;
@@ -10,11 +11,13 @@ use Model\DynamicQuery;
 use ImageValidation\Imagevalidator;
 
 
+
 /**
  * handles all users related requests like user create/edit/delete 
  */
 class UserRequestHandlers implements Authorizer
 {
+  use FilterandSort;
   private static  $exceptionMessageFormat = [
     "status" => "false",
     "statusCode" => "409",
@@ -65,20 +68,30 @@ class UserRequestHandlers implements Authorizer
 
   //gets all the users
   public static function getAllUser()
-  {
+  { 
     try {
+     
       //token and role check 
       $auhtorize = self::run();
       if ($auhtorize["status"] === false) {
         return $auhtorize;
       }
+    //database object and model object creation
 
       $userObj = new User(new DBConnect());
-      $result = $userObj->getAll();
+      
+      // using traits to put recurring functions in different file and callign it here
+      $callingParameters = self::callingParameters();
+
+     
+
+      $result = $userObj->getAll($callingParameters);
       if (!$result) {
-        self::$exceptionMessageFormat["message"]["message"]["0"] = "Cannot get data !!";
+        self::$exceptionMessageFormat["message"]["message"]["0"] = "Data not found !!";
+        self::$exceptionMessageFormat["statusCode"] = 404;
         return self::$exceptionMessageFormat;
       }
+      
       return [
         "status" => true,
         "statusCode" => "200",
@@ -152,20 +165,6 @@ class UserRequestHandlers implements Authorizer
           ];
         }
 
-        $imageName = uniqid() . '_' . $image['name'];
-        $uploadDirectory = dirname(__DIR__) . '/public/employees/uploaded_images/';
-        $uploadedFilePath = $uploadDirectory . $imageName;
-
-        $relativeImagePath = 'public/employees/uploaded_images/' . $imageName;
-
-
-        if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
-          print_r($uploadedFilePath);
-          throw new Exception("Failed to move uploaded file");
-        }
-      } else {
-        throw new Exception("No image file uploaded");
-      }
 
 
       //TAKING USER PROVIDED DATA
@@ -185,8 +184,7 @@ class UserRequestHandlers implements Authorizer
 
 
       $decodedData = $formData;
-      //putting image path in decoded data
-      $decodedData['user_image'] = $relativeImagePath;
+      
 
       //explicitly assignning employee as user_type so that admin can only be created from database
       $decodedData["user_type"] = "employee";
@@ -213,6 +211,26 @@ class UserRequestHandlers implements Authorizer
           "message" => $validationResult
         ];
       }
+
+      //uploading the photo after every other validation is ok
+      $imageName = uniqid() . '_' . $image['name'];
+      $uploadDirectory = dirname(__DIR__) . '/public/employees/uploaded_images/';
+      $uploadedFilePath = $uploadDirectory . $imageName;
+
+      $relativeImagePath = 'public/employees/uploaded_images/' . $imageName;
+
+
+      if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
+       
+        throw new Exception("Failed to move uploaded file");
+      }
+    } else {
+      throw new Exception("No image file uploaded");
+    }
+
+    //putting image path in decoded data
+    $decodedData['user_image'] = $relativeImagePath;
+
       //checking if email already exists
 
       $dynamicQuery = new DynamicQuery(new DBConnect);

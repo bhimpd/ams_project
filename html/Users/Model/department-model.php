@@ -159,7 +159,7 @@ public function getById($id){
       ];
     }
   }
-  public function deleteLocationById($id):array{
+  public function deleteDepartmentById($id):array{
     try{
       $sql = "
         DELETE from department

@@ -287,7 +287,7 @@ class DepartmentRequestHandlers implements Authorizer
 
 
       //calling model function to delete department  using id provided
-      $response = $departmentObj->deleteLocationById($decodedData["id"]);
+      $response = $departmentObj->deleteDepartmentById($decodedData["id"]);
 
 
       if (!$response["status"]) {
