@@ -141,7 +141,7 @@ public function getById($id){
       $sql = "
         UPDATE department 
         SET department = '$dataToUpdate[newDepartment]'
-        WHERE department = '$dataToUpdate[previousDepartment]'
+        WHERE id = '$dataToUpdate[id]'
       ";
       $result = $this->DBConn->conn->query($sql);
 

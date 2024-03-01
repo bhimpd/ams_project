@@ -200,19 +200,27 @@ class DepartmentRequestHandlers implements Authorizer
         $exceptionMessageFormat["message"]["message"]["id"] = "Id not found in database !!";
         return $exceptionMessageFormat;
       }
-      //checking new if new name already exsist in database
-      $checkIfNewNameAlreadyExists = $departmentObj->get($decodedData["newDepartment"]);
 
-      //if status is true , department name already exists
-      if ($checkIfNewNameAlreadyExists["status"] == "true") {
-        $exceptionMessageFormat["message"]["message"]["newDepartment"] = "New name provided already exists !!";
-        return $exceptionMessageFormat;
-      }
+      ///
+         //checking new if new name already exsist in database
+         $result = $departmentObj->get($decodedData["newDepartment"]);
+         //if id provided and id fetched by name is not same means it is not same row 
+         if ($result["status"] && ($result["data"]["id"] != $decodedData["id"])) {
+           $exceptionMessageFormat["message"]["message"]["newDepartment"] = "The name is already assigned to other id !!";
+    return $exceptionMessageFormat;
+   
+   }
 
+
+  ;
+
+    
+      
       $response = $departmentObj->updateDepartment($decodedData);
+      
 
       if (!$response["status"]) {
-        $exceptionMessageFormat["message"]["message"]["newLocation"] = "Unalbe to update in database!!";
+        $exceptionMessageFormat["message"]["message"]["newLocation"] = "Unable to update in database!!";
         return $exceptionMessageFormat;
       }
       return [

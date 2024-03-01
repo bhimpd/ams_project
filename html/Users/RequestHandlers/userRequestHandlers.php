@@ -15,6 +15,14 @@ use ImageValidation\Imagevalidator;
  */
 class UserRequestHandlers implements Authorizer
 {
+  private static  $exceptionMessageFormat = [
+    "status" => "false",
+    "statusCode" => "409",
+    "message" => [
+      "validation" => false,
+      "message" => []
+    ]
+  ];
   //reuseable function for authorization in /user
   public static function run()
   {
@@ -68,7 +76,8 @@ class UserRequestHandlers implements Authorizer
       $userObj = new User(new DBConnect());
       $result = $userObj->getAll();
       if (!$result) {
-        throw new Exception("Cannot get data !!");
+        self::$exceptionMessageFormat["message"]["message"]["0"] = "Cannot get data !!";
+        return self::$exceptionMessageFormat;
       }
       return [
         "status" => true,

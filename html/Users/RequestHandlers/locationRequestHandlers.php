@@ -200,15 +200,17 @@ class LocationRequestHandlers implements Authorizer
         $exceptionMessageFormat["message"]["message"]["id"] = "Id not found in database !!";
         return $exceptionMessageFormat;
       }
+        //checking new if new name already exsist in database
+        $result = $locationObj->get($decodedData["newLocation"]);
+      //if id provided and id fetched by name is not same means it is not same row 
+      if ($result["status"] && ($result["data"]["id"] != $decodedData["id"])) {
+        $exceptionMessageFormat["message"]["message"]["newLocation"] = "The name is already assigned to other id !!";
+ return $exceptionMessageFormat;
 
-      //checking new if new name already exsist in database
-      $checkIfNewNameAlreadyExists = $locationObj->get($decodedData["newLocation"]);
+}
 
-      //if status is true , location name already exists
-      if ($checkIfNewNameAlreadyExists["status"] == "true") {
-        $exceptionMessageFormat["message"]["message"]["newLocation"] = "New name provided already exists !!";
-        return $exceptionMessageFormat;
-      }
+    
+
 
       $response = $locationObj->updateLocation($decodedData);
 

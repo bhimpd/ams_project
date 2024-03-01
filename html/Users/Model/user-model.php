@@ -224,7 +224,7 @@ class User
     try {
       $sql = "
       DELETE FROM user 
-      WHERE id = '$id'
+      WHERE id = '$id' 
       ";
       $result = $this->DBconn->conn->query($sql);
       if (!$result) {

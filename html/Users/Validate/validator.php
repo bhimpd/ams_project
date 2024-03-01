@@ -200,7 +200,13 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
       }
 
       if (in_array("designationFormat", $value)) {
-        if (preg_match('/^[A-Za-z]+$/', $data[$key])) {
+        if (preg_match('/^\s|\s$/', $data[$key])) {
+          // There is a space at the beginning or end of the string
+          $validateData[$key] = [$key . ": No spaces allowed in start and end."];
+          continue;
+        }
+
+        if (preg_match('/^[A-Za-z\s]+$/', $data[$key])) {
           continue;
         } else {
           $validateData[$key] = [$key . " should contain only alphabets."];
@@ -229,10 +235,11 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
         if (preg_match('/^\s|\s$/', $data[$key])) {
           // There is a space at the beginning or end of the string
           $validateData[$key] = [$key . ": No spaces allowed in start and end."];
+          continue;
         }
       
 
-        if (preg_match('/^[A-Za-z0-9]+$/', $data[$key])) {
+        if (preg_match('/^[A-Za-z0-9\s]+$/', $data[$key])) {
           continue;
         }else{
           $validateData[$key] = [$key . " should contain only alphanumerals."];
@@ -248,14 +255,6 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
         if(preg_match('/^[A-Za-z\s]+$/',$data[$key])){
 
      
-          continue;
-        } else {
-          $validateData[$key] = [$key . " should contain only alphabetical characters."];
-        }
-      }
-      if (in_array('departmentFormat', $value)) {
-
-        if (preg_match('/^[A-Za-z\s]+$/', $data[$key])) {
           continue;
         } else {
           $validateData[$key] = [$key . " should contain only alphabetical characters."];
