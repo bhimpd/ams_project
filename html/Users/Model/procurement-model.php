@@ -3,6 +3,10 @@
 namespace Model;
 
 use Configg\DBConnect;
+use Model\Assets;
+use PaginationHelper;
+use Routes\Assets\Assets as AssetsAssets;
+
 // use EmailProcurement\ProcurementEmailSender;
 // include __DIR__ . ".../../Email/EmailSender.php";
 
@@ -95,8 +99,14 @@ class Procurement
     }
 
 
-    public function getAll($search, $sortBy, $order, $filters)
+    public function getAll($search, $sortBy, $order, $filters, $currentPage = 1, $perPage = 7)
     {
+
+        $totalData = $this->getTotalDataCount($search, $filters);
+        $pagination = PaginationHelper::paginate($currentPage, $perPage, $totalData);
+        $offSet = $pagination['offSet'];
+
+
         $sql = "SELECT pr.id, 
         u_requested.name AS requested_by,
         pr.number_of_items,
@@ -147,6 +157,8 @@ class Procurement
         }
 
         $sql .= " ORDER BY pr.$sortBy $order";
+        $sql .= " LIMIT $perPage OFFSET $offSet";
+
 
         $result = $this->DBconn->conn->query($sql);
 
@@ -350,7 +362,6 @@ class Procurement
         }
     }
 
-
     public function getProcurementInfo($id)
     {
         $procurementsql = "SELECT pr.*, 
@@ -380,4 +391,63 @@ class Procurement
             ];
         }
     }
+
+    private function getTotalDataCount( $search, $filters)
+    {
+        $sql = "SELECT COUNT(*) AS total_count FROM 
+        procurements pr
+   LEFT  JOIN 
+        user u_requested ON pr.requested_by_id = u_requested.id
+   LEFT JOIN 
+        user u_approved ON pr.approved_by_id = u_approved.id
+   WHERE 1=1"; // Start the WHERE clause
+           
+
+           if (!empty($search)) {
+            $columns = ['u_requested.name', 'pr.status', 'u_approved.name', 'pr.approved_date'];
+            $searchConditions = [];
+
+            foreach ($columns as $column) {
+                if ($column === 'pr.approved_date') {
+                    $searchConditions[] = "DATE($column) = '$search'";
+                } else {
+                    $searchConditions[] = "LOWER($column) LIKE LOWER('%$search%')";
+                }
+            }
+
+            $sql .= " AND (" . implode(" OR ", $searchConditions) . ")";
+        }
+
+        foreach ($filters as $key => $value) {
+            switch ($key) {
+                case 'approvedBy':
+                    $sql .= " AND u_approved.name = '$value'";
+                    break;
+                case 'requestedBy':
+                    $sql .= " AND u_requested.name = '$value'";
+                    break;
+                case 'status':
+                    $sql .= " AND pr.status = '$value'";
+                    break;
+                case 'approvedDate':
+                    $sql .= " AND DATE(pr.approved_date) = '$value'";
+                    break;
+                default:
+                    // Handle invalid filter key
+                    throw new \Exception("Invalid filter key.");
+            }
+        }
+
+        $result = $this->DBconn->conn->query($sql);
+
+        if (!$result) {
+            throw new \Exception("Error executing the query: " . $this->DBconn->conn->error);
+        }
+
+        $row = $result->fetch_assoc();
+        $total_count = $row['total_count'];
+
+        return $total_count;
+    }
+
 }
