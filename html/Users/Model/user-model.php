@@ -187,8 +187,11 @@ class User
 
         // Construct the SQL query
         $sql = "INSERT INTO user ($columns) VALUES ($values)";
- 
+       
+       
+
         $result = $this->DBconn->conn->query($sql);
+        
 
        if(!$result){
         throw new \Exception ("Unable to insert user into database");
@@ -197,7 +200,7 @@ class User
        
         return [
           "status " => true ,
-          "message" => "User created successfully !",
+          "message" => "User created successfulljdhslajkfg",
           "data" => [
             "id" => $lastInsertedId
           ]
