@@ -189,26 +189,13 @@ class Assets
             "message" => "Unable to get data"
         ];
     }
-
-    public function delete(int $id)
+public function update($data,$id)
     {
-        $sql = "
-        DELETE FROM assets
-        WHERE id = '$id'
-        ";
-        $result = $this->DBconn->conn->query($sql);
-        if (!$result) {
-            throw new \Exception("Unable to delete asset from database!!");
+
+
+        if (!is_array($data)) {
+            throw new Exception("Invalid data format. Data must be an array.");
         }
-        return [
-            "status" => true,
-            "message" => "asset deleted successfully.",
-        ];
-    }
-
-    public function update(int $id, string $jsonData): array
-    {
-        $data = json_decode($jsonData, true);
 
         $name = ucfirst($data['name']);
         $assets_type = ucfirst($data['assets_type']);
@@ -219,6 +206,7 @@ class Assets
         $assigned_to = $data['assigned_to'];
         $status = $data['status'];
         $image_name = $data['image_name'];
+
 
         $sql = "UPDATE " . self::TABLE . " 
             SET 
@@ -242,6 +230,23 @@ class Assets
 
         return ["result" => true];
     }
+    public function delete(int $id)
+    {
+        $sql = "
+        DELETE FROM assets
+        WHERE id = '$id'
+        ";
+        $result = $this->DBconn->conn->query($sql);
+        if (!$result) {
+            throw new \Exception("Unable to delete asset from database!!");
+        }
+        return [
+            "status" => true,
+            "message" => "asset deleted successfully.",
+        ];
+    }
+
+    
 
     private function getTotalDataCount($assets_type, $search, $filters)
     {
