@@ -204,6 +204,7 @@ class DepartmentRequestHandlers implements Authorizer
       ///
       //checking new if new name already exsist in database
       $result = $departmentObj->get($decodedData["newDepartment"]);
+     
       //if id provided and id fetched by name is not same means it is not same row 
       if ($result["status"] && ($result["data"]["id"] != $decodedData["id"])) {
         $exceptionMessageFormat["message"]["message"]["newDepartment"] = "The name is already assigned to other id !!";

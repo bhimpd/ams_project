@@ -58,14 +58,14 @@ class Department
         throw new Exception("Unable to fetch the given id data");
       } else {
         return [
-          "status" => "true",
+          "status" => true,
           "message" => "Data extracted successfully!!",
           "data" => $result->fetch_assoc()
         ];
       }
     } catch (Exception $e) {
       return [
-        "status" => "false",
+        "status" => false,
         "message" => $e->getMessage(),
         "data" => []
       ];
