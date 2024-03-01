@@ -151,18 +151,18 @@ class UserRequestHandlers implements Authorizer
         $image = $_FILES['user_image'];
 
         if ($image['error'] !== UPLOAD_ERR_OK) {
-          throw new Exception("Failed to upload image");
+          self::$exceptionMessageFormat["message"]["message"]["user_image"] = "Failed to upload image !!";
+          
+          return self::$exceptionMessageFormat;
         }
 
         $image_validation = Imagevalidator::imagevalidation($image);
 
         if (!$image_validation["status"]) {
-          return [
-            "status" => false,
-            "statusCode" => "422",
-            "message" => "image validation failed",
-            "error" => $image_validation["message"]
-          ];
+          self::$exceptionMessageFormat["message"]["message"]["user_image"] = $image_validation["message"];
+          
+          return self::$exceptionMessageFormat;
+
         }
 
 
@@ -273,44 +273,41 @@ class UserRequestHandlers implements Authorizer
   public static function updateUser()
   {
     try {
-      $userObj = new User(new DBConnect());
-      $response = Authorization::verifyToken();
-      if (!$response["status"]) {
-        return [
-          "status" => false,
-          "statusCode" => "401",
-          "message" => $response["message"],
-          "data" => []
-        ];
-      }
-      //checks if user is not admin
-      if ($response["data"]["user_type"] !== "admin") {
-        return [
-          "status" => false,
-          "statusCode" => 401,
-          "message" => "User unauthorised",
-          "data" => $response["data"]
-        ];
-      }
+       //token and role check 
+       $auhtorize = self::run();
+       if ($auhtorize["status"] === false) {
+         return $auhtorize;
+       }
 
+      $userObj = new User(new DBConnect());
+     
       $jsonData = file_get_contents('php://input');
       //to validatte in the keys
       $decodedData = json_decode($jsonData, true);
       $id = $_GET["id"] ?? null;
       if (!$id) {
-        throw new Exception("Id not provided !!");
+        self::$exceptionMessageFormat["message"]["message"]["id"] = "Id is required field !!";
+        
+        return self::$exceptionMessageFormat;
+      
       }
       $result = $userObj->get($id, NULL);
       if ($result["status"] == "false") {
         unset($result);
-        return throw new Exception("User not found to update!!");
+        self::$exceptionMessageFormat["message"]["message"]["id"] = "User not found to update!! !!";
+        self::$exceptionMessageFormat["statusCode"] = 404;
+        return self::$exceptionMessageFormat;
       }
-      $keys = [
-        'username' => ['required', 'maxlength', 'format'],
-        'password' => ['required', 'maxlength', 'minLength'],
-        'email' => ['required', 'email'],
-        'name' => ['required', 'empty']
-      ];
+    //VALIDATION OF PROVIDED DATA
+    $keys = [
+      'name' => ['required', 'empty', 'maxLength', 'minLength'],
+      'job_type' => ['required', 'empty'],
+      'designation' => ['required', 'empty', 'designationFormat'],
+      'department' => ['required', 'empty', 'maxLength', 'minLength'],
+      'email' => ['required', 'empty', 'maxLength', 'minLength', 'emailFormat'],
+      'phone_number' => ['required', 'empty', 'maxLength', 'minLength', 'phone_numberFormat'],
+
+    ];
 
       $validationResult = Validator::validate($decodedData, $keys);
       if (!$validationResult["validate"]) {
@@ -322,6 +319,42 @@ class UserRequestHandlers implements Authorizer
         );
         return $response;
       }
+         //taking image first
+         if (isset($_FILES['user_image'])) {
+          $image = $_FILES['user_image'];
+  
+          if ($image['error'] !== UPLOAD_ERR_OK) {
+            self::$exceptionMessageFormat["message"]["message"]["user_image"] = "Failed to upload image !!";
+            
+            return self::$exceptionMessageFormat;
+          }
+  
+          $image_validation = Imagevalidator::imagevalidation($image);
+  
+          if (!$image_validation["status"]) {
+            self::$exceptionMessageFormat["message"]["message"]["user_image"] = $image_validation["message"];
+            
+            return self::$exceptionMessageFormat;
+  
+          }
+           //uploading the photo after every other validation is ok
+      $imageName = uniqid() . '_' . $image['name'];
+      $uploadDirectory = dirname(__DIR__) . '/public/employees/uploaded_images/';
+      $uploadedFilePath = $uploadDirectory . $imageName;
+
+      $relativeImagePath = 'public/employees/uploaded_images/' . $imageName;
+
+         //putting image path in decoded data
+    $decodedData['user_image'] = $relativeImagePath;
+
+      if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
+        self::$exceptionMessageFormat["message"]["message"]["user_image"] = "Failed to move uploaded file !!";
+    
+      }
+    } else {
+      self::$exceptionMessageFormat["message"]["message"]["user_image"] = "No image file uploaded!!";
+     return self::$exceptionMessageFormat;
+    }
 
       $updateStatus = $userObj->update($id, $jsonData);
 
@@ -334,11 +367,8 @@ class UserRequestHandlers implements Authorizer
           "updatedData" => json_decode($jsonData)
         ];
       } else {
-        return [
-          "status" => false,
-          "statusCode" => 409,
-          // "data" => $updateStatus
-        ];
+          $exceptionMessageFormat["message"]["message"]["newLocation"] = "Unable to update in database!!";
+        return $exceptionMessageFormat;
       }
 
     } catch (Exception $e) {
