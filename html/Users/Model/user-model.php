@@ -59,7 +59,7 @@ class User
       $sql = "
       SELECT * FROM user 
       
-      WHERE true ";
+      WHERE is_deleted = '0' ";
 
       //conditions will add more filter conditions 
       $conditions = [];
@@ -156,7 +156,7 @@ class User
       //checks for id
       if (isset($id)) {
 
-        $sql = "SELECT * FROM user where id = $id";
+        $sql = "SELECT * FROM user where id = $id AND is_deleted=0";
         $result = $this->DBconn->conn->query($sql);
 
         if (!$result->num_rows > 0) {
@@ -295,8 +295,9 @@ class User
   {
     try {
       $sql = "
-      DELETE FROM user 
-      WHERE id = '$id' 
+      Update user 
+      SET is_deleted = 1
+      WHERE id = '$id' AND is_deleted = 0
       ";
       $result = $this->DBconn->conn->query($sql);
       if (!$result) {

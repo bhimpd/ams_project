@@ -355,34 +355,28 @@ class UserRequestHandlers implements Authorizer
   public static function deleteUser()
   {
     try {
+          //token and role check 
+    $auhtorize = self::run();
+    if ($auhtorize["status"] === false) {
+      return $auhtorize;
+    }
+
       $userObj = new User(new DBConnect());
-      $response = Authorization::verifyToken();
-      if (!$response["status"]) {
-        return [
-          "status" => false,
-          "statusCode" => "401",
-          "message" => $response["message"],
-          "data" => []
-        ];
-      }
-      echo "here";
-      //checks if user is not admin
-      if ($response["data"]["user_type"] !== "admin") {
-        return [
-          "status" => false,
-          "statusCode" => 401,
-          "message" => "User type unauthorised !",
-          "data" => $response["data"]
-        ];
-      }
       $id = $_GET["id"];
       if (!$id) {
-        throw new Exception("Id not provided !!");
+        self::$exceptionMessageFormat["message"]["message"]["id"] = "Id is required field !!";
+        
+        return self::$exceptionMessageFormat;
       }
+      
+      
       $result = $userObj->get($id, NULL);
       if ($result["status"] == "false") {
         unset($result);
-        return throw new Exception("User not found to delete!!");
+        self::$exceptionMessageFormat["message"]["message"]["id"] = "User not found to delete!! !!";
+        self::$exceptionMessageFormat["statusCode"] = 404;
+        return self::$exceptionMessageFormat;
+       
       }
       $deleteStatus = $userObj->delete($id);
 
