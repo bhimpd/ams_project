@@ -7,6 +7,7 @@ use Configg\DBConnect;
 use Model\Procurement;
 use Validate\Validator;
 use Middleware\Authorization;
+use ProcurementValidator\ProcurementsValidation;
 
 class ProcurementRequestHandlers
 {
@@ -19,28 +20,27 @@ class ProcurementRequestHandlers
             $decodedData = json_decode($jsonData, true);
 
             //VALIDATION OF PROVIDED DATA
-            $keys = [
-                // 'product_name' => ['empty', 'maxlength', 'format'],
-                // 'category_id' => ['empty'],
-                // 'requested_by_id' => ['empty'],
+        
+            $validatekeys = [
+                'requested_by_id' => ['empty'],
                 'status' => ['empty'],
-                'approved_by_id' => ['empty'],
-                'brand' => [],
-                'estimated_price' => [],
-                'link' => [],
-                'request_urgency' => []
+                'request_urgency' => ['empty'],
+                'product_name' => ['required'],
+                'category_id' => ['required'],
+                'brand' => ['required'],
+                'estimated_price' => ['required'],
+                'link' => ['required']
             ];
-
-            $validationResult = Validator::validate($decodedData, $keys);
-
-            if (!$validationResult["validate"]) {
+            $procurementValidate = ProcurementsValidation::validateProcurement($decodedData, $validatekeys);
+            
+            if ($procurementValidate["status"] === false) {
                 return [
+                    "statusCode"=>422,
                     "status" => false,
-                    "statusCode" => "422",
-                    "message" => $validationResult
+                    "message" => $procurementValidate["message"] // Return validation errors
                 ];
             }
-
+            
             $result = $procurementObj->create($jsonData);
 
             if (!$result) {
@@ -91,12 +91,11 @@ class ProcurementRequestHandlers
         }
 
         $id = $_GET["id"] ?? NULL;
-
         if ($id == NULL) {
             return self::getAllProcurements();
         }
 
-        return self::getProcurementById();
+        return self::getProcurementById($id);
     }
 
 
@@ -112,14 +111,17 @@ class ProcurementRequestHandlers
             $filters = [];
 
             // Check for individual parameters
-            if (isset($_GET['category'])) {
-                $filters['category'] = $_GET['category'];
+            if (isset($_GET['requestedBy'])) {
+                $filters['requestedBy'] = $_GET['requestedBy'];
+            }
+            if (isset($_GET['approvedBy'])) {
+                $filters['approvedBy'] = $_GET['approvedBy'];
             }
             if (isset($_GET['status'])) {
                 $filters['status'] = $_GET['status'];
             }
-            if (isset($_GET['approved_date'])) {
-                $filters['approved_date'] = $_GET['approved_date'];
+            if (isset($_GET['approvedDate'])) {
+                $filters['approvedDate'] = $_GET['approvedDate'];
             }
 
             $result = $proObj->getAll($search, $sortBy, $order, $filters);
@@ -130,7 +132,8 @@ class ProcurementRequestHandlers
 
             return [
                 "statusCode" => "200",
-                "message" => "Data extracted.",
+                "status" => true,
+                "message" => "Data extracted",
                 "data" => $result
             ];
         } catch (Exception $e) {
@@ -148,9 +151,9 @@ class ProcurementRequestHandlers
     public static function getProcurementById()
     {
         $proObj = new Procurement(new DBConnect());
-
         $id = $_GET["id"] ?? NULL;
         $result = $proObj->get($id);
+        $procurementInfoResult = $proObj->getProcurementInfo($id);
 
         if ($result["status"] == "false") {
             return [
@@ -159,12 +162,18 @@ class ProcurementRequestHandlers
                 "message" => "procurement id $id not found"
             ];
         }
-        unset($result["password"]);
+
         return [
             "status" => true,
             "statusCode" => "200",
-            "message" => "Data extracted.",
-            "data" => $result
+            "message" => $result['message'],
+            "procurementInfo" => [
+                "requested_by" => $procurementInfoResult['requested_by'],
+                "urgency" => $procurementInfoResult['urgency'],
+                "total_data" => $result['total_data'],
+                "data" => $result['data']
+            ],
+
         ];
     }
 
@@ -181,7 +190,7 @@ class ProcurementRequestHandlers
                     "data" => []
                 ];
             }
-            //checks if user is not admin
+            // Checks if the user is not an admin
             if ($response["data"]["user_type"] !== "admin") {
                 return [
                     "status" => false,
@@ -190,34 +199,27 @@ class ProcurementRequestHandlers
                     "data" => $response["data"]
                 ];
             }
-            $id = $_GET["id"];
 
-            if (empty($id)) {
-                throw new Exception("Id not provided !!");
+            // Check if the request is for deleting a product or procurement
+            if (isset($_GET["product_id"])) {
+                $productID = $_GET["product_id"];
+                $deleteStatus = $proObj->deleteProduct($productID);
+            } else {
+                $procurementID = $_GET["id"];
+                $deleteStatus = $proObj->deleteProcurement($procurementID);
             }
-            $result = $proObj->get($id);
-
-            if ($result["status"] == "false") {
-                unset($result);
-                return [
-                    "status" => false,
-                    "statusCode" => 404,
-                    "message" => "procurement  of Id :$id not found"
-                ];
-            }
-            $deleteStatus = $proObj->delete($id);
 
             if ($deleteStatus["status"] == true) {
                 return [
                     "status" => true,
                     "statusCode" => 200,
-                    "message" => "procurement  of Id :$id deleted successfully"
+                    "message" => $deleteStatus["message"]
                 ];
             } else {
                 return [
                     "status" => false,
                     "statusCode" => 400,
-                    "message" => "$deleteStatus[message]"
+                    "message" => $deleteStatus["message"]
                 ];
             }
         } catch (Exception $e) {
@@ -226,10 +228,11 @@ class ProcurementRequestHandlers
                 "message" => $e->getMessage()
             ];
         } finally {
-            //disconnecting from database
+            // Disconnecting from the database
             $proObj->DBconn->disconnectFromDatabase();
         }
     }
+
 
     public static function updateProcurement()
     {
@@ -273,8 +276,8 @@ class ProcurementRequestHandlers
                 // 'product_name' => ['empty', 'maxlength', 'format'],
                 // 'category_id' => ['empty'],
                 // 'requested_by_id' => ['empty'],
+                // 'approved_by_id' => ['empty'],
                 'status' => ['empty'],
-                'approved_by_id' => ['empty'],
                 'brand' => [],
                 'estimated_price' => [],
                 'link' => [],

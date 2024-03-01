@@ -11,7 +11,6 @@ include __DIR__ . '/../Helpers/PaginationHelper.php';
 class Assets
 {
     const TABLE = "assets";
-    const identifier = "ITJ-DA-";
     public $DBconn;
 
     public function __construct(DbConnect $DBconn)
@@ -26,9 +25,7 @@ class Assets
     }
 
     public function create($data)
-
     {
-
         if (!is_array($data)) {
             throw new Exception("Invalid data format. Data must be an array.");
         }
@@ -64,7 +61,7 @@ class Assets
         $offSet = $pagination['offSet'];
 
         $sql = "SELECT 
-        CONCAT('" . self::identifier . "', a.id) AS id,
+        a.id AS id,
             a.name,
             a.assets_type,
             c.category_name AS category,
@@ -80,7 +77,14 @@ class Assets
         WHERE a.assets_type = '$assets_type'";
 
         if (!empty($search)) {
-            $sql .= " AND a.name LIKE '%$search%'";
+            $columns = ['a.id', 'a.name', 'c.category_name', 'u.name', 'a.status', 'assigned_date'];
+            $searchConditions = [];
+
+            foreach ($columns as $column) {
+                $searchConditions[] = "$column LIKE '%$search%'";
+            }
+
+            $sql .= " AND (" . implode(" OR ", $searchConditions) . ")";
         }
 
         foreach ($filters as $key => $value) {
@@ -91,17 +95,32 @@ class Assets
                 case 'status':
                     $sql .= " AND a.status = '$value'";
                     break;
-                case 'assigned_date':
-                    $sql .= " AND DATE(a.assigned_date) = '$value'";
+                case 'assigned_to':
+                    $sql .= " AND u.name = '$value'";
                     break;
+                case 'assigned_date':
+                    // Check if the value contains a date range
+                    if (strpos($value, 'to') !== false) {
+                        // Date range provided, split the range
+                        $dates = explode(' to ', $value);
+                        $start_date = trim($dates[0]);
+                        $end_date = trim($dates[1]);
+                        // Add the date range condition to the SQL query
+                        $sql .= " AND DATE(a.assigned_date) BETWEEN '$start_date' AND '$end_date'";
+                    } else {
+                        // Single date provided, filter by that date
+                        $sql .= " AND DATE(a.assigned_date) = '$value'";
+                    }
+                    break;
+
                 default:
                     // Handle invalid filter key
-                    throw new Exception("Invalid filter key.");
+                    throw new Exception("Invalid filter key11.");
             }
         }
 
         // Add sorting condition
-        $sql .= " ORDER BY $sortBy $order";
+        $sql .= " ORDER BY a.$sortBy $order";
         $sql .= " LIMIT $perPage OFFSET $offSet";
 
         $result = $this->DBconn->conn->query($sql);
@@ -132,10 +151,11 @@ class Assets
 
         if (isset($id)) {
             $sql = "SELECT 
-            CONCAT('" . self::identifier . "', a.id) AS id,
+            a.id AS id,
             a.name,
             a.assets_type,
             c.category_name AS category,
+            sc.category_name AS subcategory,
             a.brand,
             l.location AS location,
             u.name AS assigned_to_name,
@@ -143,6 +163,7 @@ class Assets
             a.image_name
              FROM " . self::TABLE . " AS a
              LEFT JOIN category AS c ON a.category = c.id
+             LEFT JOIN category AS sc ON a.sub_category = sc.id
              LEFT JOIN user AS u ON a.assigned_to = u.id
              LEFT JOIN location AS l ON a.location = l.id"
                 . " WHERE a.id='$id'";
@@ -244,6 +265,9 @@ class Assets
                     break;
                 case 'assigned_date':
                     $sql .= " AND DATE(a.assigned_date) = '$value'";
+                    break;
+                case 'assigned_to':
+                    $sql .= " AND u.name = '$value'";
                     break;
                 default:
                     // Handle invalid filter key
