@@ -155,6 +155,7 @@ class Assets
             a.name,
             a.assets_type,
             c.category_name AS category,
+            sc.category_name AS subcategory,
             a.brand,
             l.location AS location,
             u.name AS assigned_to_name,
@@ -162,6 +163,7 @@ class Assets
             a.image_name
              FROM " . self::TABLE . " AS a
              LEFT JOIN category AS c ON a.category = c.id
+             LEFT JOIN category AS sc ON a.sub_category = sc.id
              LEFT JOIN user AS u ON a.assigned_to = u.id
              LEFT JOIN location AS l ON a.location = l.id"
                 . " WHERE a.id='$id'";
