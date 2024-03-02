@@ -7,7 +7,12 @@ foreach (glob(__DIR__ . '/../Routes/*.php') as $file) {
 
   require_once $file;
 }
+
 foreach (glob(__DIR__ . '/../Routes/*/*.php') as $file) {
+
+  require_once $file;
+}
+foreach (glob(__DIR__ . '/../Helpers/imageHandler.php') as $file) {
 
   require_once $file;
 }

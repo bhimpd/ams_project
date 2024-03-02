@@ -163,6 +163,16 @@ class User
           throw new \Exception("Unable to fetch the given id data");
         } else {
           $row = $result->fetch_assoc();
+
+          unset($row['updated_at']);
+          unset($row["is_deleted"]);
+
+          $departmentObj = new Department(new DBConnect);
+          $departmentData = $departmentObj->getById($row["department"]);
+          $row["department"] = [
+            "id" => $departmentData["data"]["id"],
+            "name" => $departmentData["data"]["department"]
+          ];
           return $row;
         }
       }
@@ -170,7 +180,7 @@ class User
       //checks for username
       if (isset($username)) {
 
-        $sql = "SELECT * FROM user where username = '$username'";
+        $sql = "SELECT * FROM user where username = '$username' AND is_deleted=0";
         $result = $this->DBconn->conn->query($sql);
 
         if ($result->num_rows == 0) {
@@ -178,6 +188,15 @@ class User
         } else {
           $row = $result->fetch_assoc();
 
+          unset($row['updated_at']);
+          unset($row["is_deleted"]);
+
+          $departmentObj = new Department(new DBConnect);
+          $departmentData = $departmentObj->getById($row["department"]);
+          $row["department"] = [
+            "id" => $departmentData["data"]["id"],
+            "name" => $departmentData["data"]["department"]
+          ];
           return $row;
         }
       }
@@ -201,27 +220,23 @@ class User
    * @return array
    */
 
-  public function update(int $id, string $data): array
+  public function update(int $id,  $data): array
   {
     try {
-
-      if (!User::isJson($data)) {
-        throw new \Exception("The data is not json data.");
-      } else {
-
-        $data = json_decode($data, true);
-        $data["password"] = password_hash($data["password"], PASSWORD_BCRYPT);
+      
+        
         $sql = "UPDATE user 
-      SET email = '$data[email]' ,
-          password = '$data[password]' ,
-          username = '$data[username]' ,
-          name = '$data[name]',
-          user_type = '$data[user_type]'
-      WHERE id = '$id'
-       ";
+      SET ";
+      $updateClauses = array();
+      foreach ($data as $column => $value) {
+          $updateClauses[] = "$column = '$value'";
+      }
+      $sql .= implode(", ", $updateClauses);
+      $sql .= " WHERE id = '$id'";
+    
         $result = $this->DBconn->conn->query($sql);
         return array("result" => $result);
-      }
+      
 
     } catch (\Exception $e) {
       return [

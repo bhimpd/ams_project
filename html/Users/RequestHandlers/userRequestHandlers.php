@@ -4,6 +4,7 @@ namespace RequestHandlers;
 use Exception;
 use Configg\DBConnect;
 use Helpers\FilterandSort;
+use Helpers\ImageHandler;
 use Model\User;
 use Validate\Validator;
 use Middleware\Authorization;
@@ -214,12 +215,11 @@ class UserRequestHandlers implements Authorizer
 
       //uploading the photo after every other validation is ok
       $imageName = uniqid() . '_' . $image['name'];
-      $uploadDirectory = dirname(__DIR__) . '/public/employees/uploaded_images/';
+      $uploadDirectory = dirname(__DIR__) . '/public/user/uploaded_images/';
       $uploadedFilePath = $uploadDirectory . $imageName;
 
-      $relativeImagePath = 'public/employees/uploaded_images/' . $imageName;
-
-
+      $relativeImagePath = 'public/user/uploaded_images/' . $imageName;
+   
       if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
        
         throw new Exception("Failed to move uploaded file");
@@ -270,27 +270,46 @@ class UserRequestHandlers implements Authorizer
     }
   }
 
+  use ImageHandler;
   public static function updateUser()
   {
+    
     try {
        //token and role check 
        $auhtorize = self::run();
+      
        if ($auhtorize["status"] === false) {
          return $auhtorize;
        }
+      
+      
+       //TAKING USER PROVIDED DATA
 
-      $userObj = new User(new DBConnect());
-     
-      $jsonData = file_get_contents('php://input');
-      //to validatte in the keys
-      $decodedData = json_decode($jsonData, true);
+      // Define the list of expected form-data parameters
+      $parameters = ['name', 'job_type', 'designation', 'department', 'email', 'phone_number' , 'user_image'];
+
+      // Initialize an empty array to store the parameter values
+      $formData = [];
+
+      // Loop through the expected parameters and fetch their values from $_POST
+      foreach ($parameters as $param) {
+        if (isset($_POST[$param])) {
+          $formData[$param] = $_POST[$param];
+         
+        }
+      }
+      $decodedData = $formData;
+    
       $id = $_GET["id"] ?? null;
       if (!$id) {
-        self::$exceptionMessageFormat["message"]["message"]["id"] = "Id is required field !!";
+        self::$exceptionMessageFormat["message"]["message"]["id"] = "Id is required !!";
         
         return self::$exceptionMessageFormat;
       
       }
+
+     
+      $userObj = new User(new DBConnect());
       $result = $userObj->get($id, NULL);
       if ($result["status"] == "false") {
         unset($result);
@@ -315,60 +334,50 @@ class UserRequestHandlers implements Authorizer
           "status" => false,
           "statusCode" => "409",
           "message" => $validationResult,
-          "data" => json_decode($jsonData, true)
+          "data" => []
         );
         return $response;
       }
-         //taking image first
-         if (isset($_FILES['user_image'])) {
-          $image = $_FILES['user_image'];
-  
-          if ($image['error'] !== UPLOAD_ERR_OK) {
-            self::$exceptionMessageFormat["message"]["message"]["user_image"] = "Failed to upload image !!";
-            
-            return self::$exceptionMessageFormat;
-          }
-  
-          $image_validation = Imagevalidator::imagevalidation($image);
-  
-          if (!$image_validation["status"]) {
-            self::$exceptionMessageFormat["message"]["message"]["user_image"] = $image_validation["message"];
-            
-            return self::$exceptionMessageFormat;
-  
-          }
-           //uploading the photo after every other validation is ok
-      $imageName = uniqid() . '_' . $image['name'];
-      $uploadDirectory = dirname(__DIR__) . '/public/employees/uploaded_images/';
-      $uploadedFilePath = $uploadDirectory . $imageName;
 
-      $relativeImagePath = 'public/employees/uploaded_images/' . $imageName;
+      //checking if email already exists
 
-         //putting image path in decoded data
-    $decodedData['user_image'] = $relativeImagePath;
+      $dynamicQuery = new DynamicQuery(new DBConnect);
 
-      if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
-        self::$exceptionMessageFormat["message"]["message"]["user_image"] = "Failed to move uploaded file !!";
-    
+      $queryResponse = $dynamicQuery->get("user", "email", $decodedData["email"]);
+     
+      if ($queryResponse["status"] && ($queryResponse["data"]["id"] != $decodedData["id"])) {
+        self::$exceptionMessageFormat["message"]["message"]["email"] = "Email already exists !!";
+        return self::$exceptionMessageFormat;
       }
-    } else {
-      self::$exceptionMessageFormat["message"]["message"]["user_image"] = "No image file uploaded!!";
-     return self::$exceptionMessageFormat;
+
+      if(isset($_POST["user_image"])){
+        $decodedData["user_mage"] = $_POST["user_image"];
+      }
+      else if(isset($_FILES['user_image'])) {
+       $response = self ::imageUploader();
+       
+       if(!$response["status"]){
+        return $response;
+       }
+       if(isset($response["data"]["user_image"])){
+        $decodedData["user_image"] = $response["data"]["user_image"];
+       }
+       
     }
 
-      $updateStatus = $userObj->update($id, $jsonData);
+      $updateStatus = $userObj->update($id, $decodedData);
 
       if ($updateStatus["result"] == true) {
-
+        $decodedData["id"] = $id;
         return [
           "status" => true,
-          "statusCode" => "201",
+          "statusCode" => "200",
           "message" => "User Updated successfully",
-          "updatedData" => json_decode($jsonData)
+          "updatedData" => $decodedData
         ];
       } else {
-          $exceptionMessageFormat["message"]["message"]["newLocation"] = "Unable to update in database!!";
-        return $exceptionMessageFormat;
+          self::$exceptionMessageFormat["message"]["message"]["update"] = "Unable to update in database!!". ": $updateStatus[message] ";
+        return self::$exceptionMessageFormat;
       }
 
     } catch (Exception $e) {
@@ -377,9 +386,6 @@ class UserRequestHandlers implements Authorizer
         "statusCode" => 401,
         "message" => $e->getMessage()
       ];
-    } finally {
-      //disconnecting from database
-      $userObj->DBconn->disconnectFromDatabase();
     }
   }
   public static function deleteUser()
