@@ -189,7 +189,8 @@ class Assets
             "message" => "Unable to get data"
         ];
     }
-public function update($data,$id)
+
+    public function update($data,$id)
     {
 
 
@@ -230,6 +231,7 @@ public function update($data,$id)
 
         return ["result" => true];
     }
+
     public function delete(int $id)
     {
         $sql = "
@@ -246,7 +248,6 @@ public function update($data,$id)
         ];
     }
 
-    
 
     private function getTotalDataCount($assets_type, $search, $filters)
     {

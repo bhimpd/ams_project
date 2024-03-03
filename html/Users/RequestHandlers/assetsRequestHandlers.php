@@ -169,7 +169,7 @@ class AssetsRequestHandlers
             if (isset($_GET['assigned_date'])) {
                 $filters['assigned_date'] = $_GET['assigned_date'];
             }
-           
+
             if (isset($_GET['assigned_to'])) {
                 $filters['assigned_to'] = $_GET['assigned_to'];
             }
@@ -304,10 +304,7 @@ class AssetsRequestHandlers
                 ];
             }
 
-            // $jsonData = file_get_contents('php://input');
-            // to validatte in the keys
-            // $decodedData = json_decode($jsonData, true);
-            // var_dump($decodedData);die;
+
             $id = $_GET["id"];
 
             if (!$id) {
@@ -383,20 +380,38 @@ class AssetsRequestHandlers
                     ];
                 }
 
-                $imageName = uniqid() . '_' . $image['name'];
+                $imageName =  $image['name'];
                 $uploadDirectory = dirname(__DIR__) . '/public/assets/uploaded_images/';
                 $uploadedFilePath = $uploadDirectory . $imageName;
 
                 $relativeImagePath = 'public/assets/uploaded_images/' . $imageName;
-                $decodedData['image_name'] = $relativeImagePath;
 
-                if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
-                    throw new Exception("Failed to move uploaded file");
+                // Check if an image with the same unique identifier exists in the directory
+                $existingFiles = scandir($uploadDirectory);
+                $imageExists = false;
+                foreach ($existingFiles as $file) {
+                    if ($file === $imageName) {
+                        $imageExists = true;
+                        break;
+                    }
+                }
+
+                if (!$imageExists) {
+                    // Move the uploaded file only if it's a new image
+                    if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
+                        throw new Exception("Failed to move uploaded file");
+                    }
+                    $decodedData['image_name'] = $relativeImagePath;
+                } else {
+                    // Image with the same identifier already exists, use the existing path
+                    $decodedData['image_name'] = $relativeImagePath;
                 }
             } else {
                 throw new Exception("No image file uploaded");
             }
-            $updateStatus = $assetsObj->update($decodedData,$id);
+
+
+            $updateStatus = $assetsObj->update($decodedData, $id);
 
             if ($updateStatus["result"] == true) {
 
