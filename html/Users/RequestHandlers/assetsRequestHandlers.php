@@ -380,7 +380,7 @@ class AssetsRequestHandlers
                     ];
                 }
 
-                $imageName =  $image['name'];
+                $imageName =  uniqid().'_'.$image['name'];
                 $uploadDirectory = dirname(__DIR__) . '/public/assets/uploaded_images/';
                 $uploadedFilePath = $uploadDirectory . $imageName;
 
@@ -388,9 +388,14 @@ class AssetsRequestHandlers
 
                 // Check if an image with the same unique identifier exists in the directory
                 $existingFiles = scandir($uploadDirectory);
+                
+                // var_dump($lastName);die;
                 $imageExists = false;
                 foreach ($existingFiles as $file) {
-                    if ($file === $imageName) {
+                    $part = explode("_", $file);
+                    $lastName = end($part);
+                
+                    if ($lastName === $image['name']) {
                         $imageExists = true;
                         break;
                     }
