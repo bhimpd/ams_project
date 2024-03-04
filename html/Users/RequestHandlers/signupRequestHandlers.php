@@ -74,9 +74,10 @@ class SignupRequestHandlers extends UserRequestHandlers
       }
       unset($decodedData["retyped_password"]);
       $jsonData =json_encode($decodedData , true);
-
+      
       $result = $userObj->create($jsonData);
-     
+
+   
       $fetchUser = $userObj->get(NULL, $decodedData["username"]);
       $userId = $fetchUser["id"];
 
