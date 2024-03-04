@@ -122,7 +122,21 @@ class Repairreplace
           $data[] = $row;
         }
       }
+      
+     //getting name of category for each data 
+      foreach($data as $key => $value){
+        if(isset($value["Category"])){
+          $categoryObj = new Category($this->DBconn);
+          $categoryRow =$categoryObj->getById($value["Category"]);
 
+         //getting category row and setting the id and value as name
+          $data[$key]["Category"] = [
+            "id" => $value["Category"],
+            "name" => $categoryRow["data"]["category_name"]
+          ];
+        }
+      }
+ 
       return [
         "status" => "true",
         "message" => "Data extracted successfully",

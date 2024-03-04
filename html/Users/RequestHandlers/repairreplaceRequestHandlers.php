@@ -37,6 +37,8 @@ class RepairreplaceRequestHandlers implements Authorizer
 
   public static function get()
   {
+    
+
     //token and role check 
     $auhtorize = self::run();
     if ($auhtorize["status"] === false) {
@@ -69,7 +71,6 @@ class RepairreplaceRequestHandlers implements Authorizer
         }
       }
     }
-
     //query sending to model
     $response = $repairreplaceObj->get($callingParameters);
 
