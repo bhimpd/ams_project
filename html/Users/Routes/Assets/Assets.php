@@ -13,16 +13,17 @@ class Assets
 
         switch ($method) {
             case 'POST':
-                return self::create();
+                if(isset($_POST['_method']) && $_POST['_method'] === 'PUT') {
+                    return self::update();
+                } else {
+                    return self::create();
+                }
 
             case 'GET':
                 return self::get();
 
             case 'DELETE':
                 return self::delete();
-
-                case 'PUT':
-                    return self::update();
 
             default:
                 echo "Route for given request type not found!!";

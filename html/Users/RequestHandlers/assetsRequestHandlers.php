@@ -38,7 +38,6 @@ class AssetsRequestHandlers
                 'status' => $status,
             ];
 
-
             $keys = [
                 'name' => ['empty', 'minLength', 'maxLength'],
                 'assets_type' => ['empty', 'assets_format'],
@@ -170,7 +169,7 @@ class AssetsRequestHandlers
             if (isset($_GET['assigned_date'])) {
                 $filters['assigned_date'] = $_GET['assigned_date'];
             }
-           
+
             if (isset($_GET['assigned_to'])) {
                 $filters['assigned_to'] = $_GET['assigned_to'];
             }
@@ -305,9 +304,7 @@ class AssetsRequestHandlers
                 ];
             }
 
-            $jsonData = file_get_contents('php://input');
-            //to validatte in the keys
-            $decodedData = json_decode($jsonData, true);
+
             $id = $_GET["id"];
 
             if (!$id) {
@@ -320,32 +317,106 @@ class AssetsRequestHandlers
                 unset($result);
                 throw new Exception("assets not found to update!!");
             }
+
+            // Get other form-data parameters
+            $name = isset($_POST['name']) ? $_POST['name'] : '';
+            $assetsType = isset($_POST['assets_type']) ? $_POST['assets_type'] : '';
+            $category = isset($_POST['category']) ? $_POST['category'] : '';
+            $subCategory = isset($_POST['sub_category']) ? $_POST['sub_category'] : '';
+            $brand = isset($_POST['brand']) ? $_POST['brand'] : '';
+            $location = isset($_POST['location']) ? $_POST['location'] : '';
+            $assignedTo = isset($_POST['assigned_to']) ? $_POST['assigned_to'] : '';
+            $status = isset($_POST['status']) ? $_POST['status'] : '';
+
+            $decodedData = [
+                'name' => $name,
+                'assets_type' => $assetsType,
+                'category' => $category,
+                'sub_category' => $subCategory,
+                'brand' => $brand,
+                'location' => $location,
+                'assigned_to' => $assignedTo,
+                'status' => $status,
+            ];
+
+
             $keys = [
-                'name' => ['empty'],
-                'assets_type' => ['empty'],
+                'name' => ['empty', 'minLength', 'maxLength'],
+                'assets_type' => ['empty', 'assets_format'],
                 'category' => ['empty'],
-                'sub_category' => [],
-                'brand' => [],
-                'location' => ['empty', 'maxlength'],
+                'sub_category' => ['empty'],
+                'brand' => ['empty', 'minlength', 'maxLength', 'category_nameFormat'],
+                'location' => ['required', 'empty'],
                 'assigned_to' => ['empty'],
-                'status' => [],
-                'assets_image' => []
+                'status' => ['empty', 'required'],
             ];
 
             $validationResult = Validator::validate($decodedData, $keys);
 
             if (!$validationResult["validate"]) {
-
-                $response = array(
+                return [
                     "status" => false,
-                    "statusCode" => "409",
-                    "message" => $validationResult,
-                    "data" => json_decode($jsonData, true)
-                );
-                return $response;
+                    "statusCode" => "422",
+                    "message" => $validationResult
+                ];
             }
 
-            $updateStatus = $assetsObj->update($id, $jsonData);
+
+            if (isset($_FILES['assets_image'])) {
+                $image = $_FILES['assets_image'];
+
+                if ($image['error'] !== UPLOAD_ERR_OK) {
+                    throw new Exception("Failed to upload image");
+                }
+
+                $image_validation = Imagevalidator::imagevalidation($image);
+
+                if (!$image_validation["status"]) {
+                    return [
+                        "status" => false,
+                        "statusCode" => "422",
+                        "message" => "image validation failed",
+                        "error" => $image_validation["message"]
+                    ];
+                }
+
+                $imageName =  uniqid().'_'.$image['name'];
+                $uploadDirectory = dirname(__DIR__) . '/public/assets/uploaded_images/';
+                $uploadedFilePath = $uploadDirectory . $imageName;
+
+                $relativeImagePath = 'public/assets/uploaded_images/' . $imageName;
+
+                // Check if an image with the same unique identifier exists in the directory
+                $existingFiles = scandir($uploadDirectory);
+                
+                // var_dump($lastName);die;
+                $imageExists = false;
+                foreach ($existingFiles as $file) {
+                    $part = explode("_", $file);
+                    $lastName = end($part);
+                
+                    if ($lastName === $image['name']) {
+                        $imageExists = true;
+                        break;
+                    }
+                }
+
+                if (!$imageExists) {
+                    // Move the uploaded file only if it's a new image
+                    if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
+                        throw new Exception("Failed to move uploaded file");
+                    }
+                    $decodedData['image_name'] = $relativeImagePath;
+                } else {
+                    // Image with the same identifier already exists, use the existing path
+                    $decodedData['image_name'] = $relativeImagePath;
+                }
+            } else {
+                throw new Exception("No image file uploaded");
+            }
+
+
+            $updateStatus = $assetsObj->update($decodedData, $id);
 
             if ($updateStatus["result"] == true) {
 
@@ -353,7 +424,7 @@ class AssetsRequestHandlers
                     "status" => true,
                     "statusCode" => "201",
                     "message" => "assets Updated successfully",
-                    "updatedData" => json_decode($jsonData)
+                    "updatedData" => $decodedData
                 ];
             } else {
                 return [

@@ -20,7 +20,7 @@ class ProcurementRequestHandlers
             $decodedData = json_decode($jsonData, true);
 
             //VALIDATION OF PROVIDED DATA
-        
+
             $validatekeys = [
                 'requested_by_id' => ['empty'],
                 'status' => ['empty'],
@@ -32,15 +32,15 @@ class ProcurementRequestHandlers
                 'link' => ['required']
             ];
             $procurementValidate = ProcurementsValidation::validateProcurement($decodedData, $validatekeys);
-            
+
             if ($procurementValidate["status"] === false) {
                 return [
-                    "statusCode"=>422,
+                    "statusCode" => 422,
                     "status" => false,
                     "message" => $procurementValidate["message"] // Return validation errors
                 ];
             }
-            
+
             $result = $procurementObj->create($jsonData);
 
             if (!$result) {
@@ -273,29 +273,25 @@ class ProcurementRequestHandlers
                 unset($result);
                 throw new Exception("Procurement not found to update!!");
             }
-            $keys = [
-                // 'product_name' => ['empty', 'maxlength', 'format'],
-                // 'category_id' => ['empty'],
-                // 'requested_by_id' => ['empty'],
-                // 'approved_by_id' => ['empty'],
+            $validatekeys = [
+                'requested_by_id' => ['empty'],
                 'status' => ['empty'],
-                'brand' => [],
-                'estimated_price' => [],
-                'link' => [],
-                'request_urgency' => []
+                'request_urgency' => ['empty'],
+                'product_name' => ['required'],
+                'category_id' => ['required'],
+                'brand' => ['required'],
+                'estimated_price' => ['required'],
+                'link' => ['required']
             ];
 
-            $validationResult = Validator::validate($decodedData, $keys);
+            $procurementValidate = ProcurementsValidation::validateProcurement($decodedData, $validatekeys);
 
-            if (!$validationResult["validate"]) {
-
-                $response = array(
+            if ($procurementValidate["status"] === false) {
+                return [
+                    "statusCode" => 422,
                     "status" => false,
-                    "statusCode" => "409",
-                    "message" => $validationResult,
-                    "data" => json_decode($jsonData, true)
-                );
-                return $response;
+                    "message" => $procurementValidate["message"] // Return validation errors
+                ];
             }
 
             $updateStatus = $proObj->update($id, $jsonData);
