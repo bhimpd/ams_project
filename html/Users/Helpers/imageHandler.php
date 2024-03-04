@@ -43,10 +43,11 @@ trait ImageHandler
     //uploading the photo after every other validation is ok
       $imageName = uniqid() . '_' . $image['name'];
       $uploadDirectory = dirname(__DIR__) . '/public/user/uploaded_images/';
-      $uploadedFilePath = $uploadDirectory . $imageName;
-
-      $relativeImagePath = 'public/user/uploaded_images/' . $imageName;
    
+      $uploadedFilePath = $uploadDirectory . $imageName;
+   
+      $relativeImagePath = '/Users/public/user/uploaded_images/' . $imageName;
+    
 
     if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
       $error = error_get_last();

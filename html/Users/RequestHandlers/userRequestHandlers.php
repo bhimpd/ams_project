@@ -218,7 +218,7 @@ class UserRequestHandlers implements Authorizer
       $uploadDirectory = dirname(__DIR__) . '/public/user/uploaded_images/';
       $uploadedFilePath = $uploadDirectory . $imageName;
 
-      $relativeImagePath = 'public/user/uploaded_images/' . $imageName;
+      $relativeImagePath = '/Users/public/user/uploaded_images/' . $imageName;
    
       if (!move_uploaded_file($image['tmp_name'], $uploadedFilePath)) {
        
@@ -350,10 +350,12 @@ class UserRequestHandlers implements Authorizer
         return self::$exceptionMessageFormat;
       }
 
-      if(isset($_POST["user_image"])){
+      //checking if the user image is same(sends the image path) or if new image is uploaded($_FILE is set)
+      if(isset($_POST["user_image"]) && !empty($_POST["user_image"])){
         $decodedData["user_image"] = $_POST["user_image"];
       }
       else if(isset($_FILES['user_image'])) {
+        //image uplodaer moves the uploaded file and returns path
        $response = self ::imageUploader();
        
        if(!$response["status"]){
@@ -363,8 +365,13 @@ class UserRequestHandlers implements Authorizer
         $decodedData["user_image"] = $response["data"]["user_image"];
        }
        
+    }else{
+      self::$exceptionMessageFormat["message"]["message"]["user_image"] = "Image data must be provided !";
+      return self::$exceptionMessageFormat;
     }
 
+  
+  
       $updateStatus = $userObj->update($id, $decodedData);
 
       if ($updateStatus["result"] == true) {
