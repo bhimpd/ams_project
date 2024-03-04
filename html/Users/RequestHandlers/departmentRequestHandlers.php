@@ -200,19 +200,23 @@ class DepartmentRequestHandlers implements Authorizer
         $exceptionMessageFormat["message"]["message"]["id"] = "Id not found in database !!";
         return $exceptionMessageFormat;
       }
-      //checking new if new name already exsist in database
-      $checkIfNewNameAlreadyExists = $departmentObj->get($decodedData["newDepartment"]);
 
-      //if status is true , department name already exists
-      if ($checkIfNewNameAlreadyExists["status"] == "true") {
-        $exceptionMessageFormat["message"]["message"]["newDepartment"] = "New name provided already exists !!";
+      ///
+      //checking new if new name already exsist in database
+      $result = $departmentObj->get($decodedData["newDepartment"]);
+     
+      //if id provided and id fetched by name is not same means it is not same row 
+      if ($result["status"] && ($result["data"]["id"] != $decodedData["id"])) {
+        $exceptionMessageFormat["message"]["message"]["newDepartment"] = "The name is already assigned to other id !!";
         return $exceptionMessageFormat;
+
       }
 
       $response = $departmentObj->updateDepartment($decodedData);
 
+
       if (!$response["status"]) {
-        $exceptionMessageFormat["message"]["message"]["newLocation"] = "Unalbe to update in database!!";
+        $exceptionMessageFormat["message"]["message"]["newLocation"] = "Unable to update in database!!";
         return $exceptionMessageFormat;
       }
       return [
@@ -235,7 +239,7 @@ class DepartmentRequestHandlers implements Authorizer
   public static function deleteDepartment(): array
   {
     try {
-   
+
       //token and role check 
       $auhtorize = self::run();
       if ($auhtorize["status"] === false) {
@@ -265,27 +269,27 @@ class DepartmentRequestHandlers implements Authorizer
       }
       //check if its in database
 
-       //check if the id exists in database
-       $checkIfIdExists = $departmentObj->getById($decodedData["id"]);
-       $exceptionMessageFormat = [
-         "status" => "false",
-         "statusCode" => "409",
-         "message" => [
-           "validation" => false,
-           "message" => []
-         ]
-       ];
-       //if status is true , location name already exists
-       if ($checkIfIdExists["status"] == "false") {
+      //check if the id exists in database
+      $checkIfIdExists = $departmentObj->getById($decodedData["id"]);
+      $exceptionMessageFormat = [
+        "status" => "false",
+        "statusCode" => "409",
+        "message" => [
+          "validation" => false,
+          "message" => []
+        ]
+      ];
+      //if status is true , location name already exists
+      if ($checkIfIdExists["status"] == "false") {
         $exceptionMessageFormat["message"]["message"]["id"] = "Id not found in database !!";
         return $exceptionMessageFormat;
       }
 
-     
- //calling model function to delete department  using id provided
- $response = $departmentObj->deleteLocationById($decodedData["id"]);
 
-     
+      //calling model function to delete department  using id provided
+      $response = $departmentObj->deleteDepartmentById($decodedData["id"]);
+
+
       if (!$response["status"]) {
         $exceptionMessageFormat["message"]["message"]["id"] = "$response[message]";
         return $exceptionMessageFormat;

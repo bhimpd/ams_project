@@ -46,22 +46,94 @@ class User
    */
 
 
-  public function getAll()
+  public function getAll(...$options)
   {
     try {
-      $sql = "SELECT * FROM user";
+      $defaultOptions = [
+        "orderby" => "id",
+        "sortorder" => "ASC",
+        "Limit" => 7,
+      ];
+      $parameters = array_merge($defaultOptions, ...$options);
+
+      $sql = "
+      SELECT * FROM user 
+      
+      WHERE is_deleted = '0' ";
+
+      //conditions will add more filter conditions 
+      $conditions = [];
+      //  the conditions to check and their columns in database
+      $conditionsToCheck = [
+        "filterbyDesignation" => "designation",
+        "filterbyDepartment" => "department",
+      ];
+
+      // Iterate over the conditions to check
+      foreach ($conditionsToCheck as $param => $column) {
+        // Check if the parameter is set in $parameters and not empty
+        if (isset($parameters[$param]) && !empty($parameters[$param])) {
+          //  adding the condition to the $conditions array
+
+          $conditions[] = "$column = '" . $parameters[$param] . "'";
+        }
+      }
+      // Construct the SQL query with conditions if any
+
+      if (!empty($conditions)) {
+        $sql .= " AND " . implode(" AND ", $conditions);
+      }
+      // getting search keyword from $parameters
+      $searchKeyword = $parameters["searchKeyword"];
+
+      //colums to search into
+      $searchColumns = ['id', 'name', 'email', 'designation', 'department', 'phone_number'];
+
+
+      // Constructing the WHERE clause dynamically based on the search keyword and columns
+      $whereClause = "";
+      if (!empty($searchKeyword)) {
+        foreach ($searchColumns as $column) {
+          $whereClause .= "$column LIKE '%$searchKeyword%' OR "; // Construct LIKE condition for each column
+        }
+        // Remove the trailing " OR " from the last condition
+        $whereClause = rtrim($whereClause, " OR ");
+        // Construct the SQL query
+
+        if (!empty($whereClause)) {
+          $sql .= " AND 
+         ($whereClause)
+        ";
+        }
+      }
+      //orderby and sort order part
+      $sql .= " ORDER BY user.`$parameters[orderby]` $parameters[sortorder] ";
+
+
       $result = $this->DBconn->conn->query($sql);
 
       $data = $result->fetch_all(MYSQLI_ASSOC);
 
+
       //removing password fom response
       foreach ($data as &$row) {
         unset($row['password']);
+        unset($row['is_deleted']);
+        unset($row['updated_at']);
+        $departmentObj = new Department(new DBConnect);
+        $departmentData = $departmentObj->getById($row["department"]);
+        $row["department"] = [
+          "id" => $departmentData["data"]["id"],
+          "name" => $departmentData["data"]["department"]
+        ];
+       
       }
-
       if (empty($data)) {
         throw new \Exception("Unable to fetch data form DB");
       }
+
+     
+
       return $data;
 
     } catch (\Exception $e) {
@@ -84,13 +156,23 @@ class User
       //checks for id
       if (isset($id)) {
 
-        $sql = "SELECT * FROM user where id = $id";
+        $sql = "SELECT * FROM user where id = $id AND is_deleted=0";
         $result = $this->DBconn->conn->query($sql);
 
         if (!$result->num_rows > 0) {
           throw new \Exception("Unable to fetch the given id data");
         } else {
           $row = $result->fetch_assoc();
+
+          unset($row['updated_at']);
+          unset($row["is_deleted"]);
+
+          $departmentObj = new Department(new DBConnect);
+          $departmentData = $departmentObj->getById($row["department"]);
+          $row["department"] = [
+            "id" => $departmentData["data"]["id"],
+            "name" => $departmentData["data"]["department"]
+          ];
           return $row;
         }
       }
@@ -98,7 +180,7 @@ class User
       //checks for username
       if (isset($username)) {
 
-        $sql = "SELECT * FROM user where username = '$username'";
+        $sql = "SELECT * FROM user where username = '$username' AND is_deleted=0";
         $result = $this->DBconn->conn->query($sql);
 
         if ($result->num_rows == 0) {
@@ -106,6 +188,15 @@ class User
         } else {
           $row = $result->fetch_assoc();
 
+          unset($row['updated_at']);
+          unset($row["is_deleted"]);
+
+          $departmentObj = new Department(new DBConnect);
+          $departmentData = $departmentObj->getById($row["department"]);
+          $row["department"] = [
+            "id" => $departmentData["data"]["id"],
+            "name" => $departmentData["data"]["department"]
+          ];
           return $row;
         }
       }
@@ -129,27 +220,23 @@ class User
    * @return array
    */
 
-  public function update(int $id, string $data): array
+  public function update(int $id,  $data): array
   {
     try {
-
-      if (!User::isJson($data)) {
-        throw new \Exception("The data is not json data.");
-      } else {
-
-        $data = json_decode($data, true);
-        $data["password"] = password_hash($data["password"], PASSWORD_BCRYPT);
+      
+        
         $sql = "UPDATE user 
-      SET email = '$data[email]' ,
-          password = '$data[password]' ,
-          username = '$data[username]' ,
-          name = '$data[name]',
-          user_type = '$data[user_type]'
-      WHERE id = '$id'
-       ";
+      SET ";
+      $updateClauses = array();
+      foreach ($data as $column => $value) {
+          $updateClauses[] = "$column = '$value'";
+      }
+      $sql .= implode(", ", $updateClauses);
+      $sql .= " WHERE id = '$id'";
+    
         $result = $this->DBconn->conn->query($sql);
         return array("result" => $result);
-      }
+      
 
     } catch (\Exception $e) {
       return [
@@ -180,24 +267,27 @@ class User
           //hashing the inserted password
           $data["password"] = password_hash($data["password"], PASSWORD_BCRYPT);
         }
-  
+
         // Generating column names and values dynamically
         $columns = implode(', ', array_keys($data));
         $values = "'" . implode("', '", array_values($data)) . "'";
 
         // Construct the SQL query
         $sql = "INSERT INTO user ($columns) VALUES ($values)";
- 
+
+
+
         $result = $this->DBconn->conn->query($sql);
 
-       if(!$result){
-        throw new \Exception ("Unable to insert user into database");
-       }
-       $lastInsertedId = $this->DBconn->conn->insert_id;
-       
+
+        if (!$result) {
+          throw new \Exception("Unable to insert user into database");
+        }
+        $lastInsertedId = $this->DBconn->conn->insert_id;
+
         return [
-          "status " => true ,
-          "message" => "User created successfully !",
+          "status " => true,
+          "message" => "User created successfulljdhslajkfg",
           "data" => [
             "id" => $lastInsertedId
           ]
@@ -220,8 +310,9 @@ class User
   {
     try {
       $sql = "
-      DELETE FROM user 
-      WHERE id = '$id'
+      Update user 
+      SET is_deleted = 1
+      WHERE id = '$id' AND is_deleted = 0
       ";
       $result = $this->DBconn->conn->query($sql);
       if (!$result) {

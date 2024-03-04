@@ -58,14 +58,14 @@ class Department
         throw new Exception("Unable to fetch the given id data");
       } else {
         return [
-          "status" => "true",
+          "status" => true,
           "message" => "Data extracted successfully!!",
           "data" => $result->fetch_assoc()
         ];
       }
     } catch (Exception $e) {
       return [
-        "status" => "false",
+        "status" => false,
         "message" => $e->getMessage(),
         "data" => []
       ];
@@ -141,7 +141,7 @@ public function getById($id){
       $sql = "
         UPDATE department 
         SET department = '$dataToUpdate[newDepartment]'
-        WHERE department = '$dataToUpdate[previousDepartment]'
+        WHERE id = '$dataToUpdate[id]'
       ";
       $result = $this->DBConn->conn->query($sql);
 
@@ -159,7 +159,7 @@ public function getById($id){
       ];
     }
   }
-  public function deleteLocationById($id):array{
+  public function deleteDepartmentById($id):array{
     try{
       $sql = "
         DELETE from department

@@ -14,14 +14,26 @@ class User
         self::get();
         break;
       case 'POST':
+
+        //defining case for update 
+        //using post to allow form data during update
+        if ($_GET["_method"] == "PUT") {
+          goto y;
+        }
+
         self::create();
         break;
-      case 'PUT':
+
+
+        //label  for update
+        y:
         self::update();
         break;
+
       case 'DELETE':
         self::delete();
         break;
+
       default:
         echo "Requested method not defined!!";
         break;

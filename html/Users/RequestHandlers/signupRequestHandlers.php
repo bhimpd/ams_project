@@ -12,6 +12,15 @@ use Validate\Validator;
 //extending UserRequestHandler to use its functions
 class SignupRequestHandlers extends UserRequestHandlers
 {
+  private static  $exceptionMessageFormat = [
+    "status" => "false",
+    "statusCode" => "409",
+    "message" => [
+      "validation" => false,
+      "message" => []
+    ]
+  ];
+
   //overriding createUser functoin fo UserRequestHandlers
   public static function createUser()
   {
@@ -31,11 +40,15 @@ class SignupRequestHandlers extends UserRequestHandlers
      $foundId = $checkIfUsernameExists["id"];
      $tempData = json_decode($jsonData , true);
      $tempData["id"] = $foundId;
-     
+    
       if (isset($checkIfUsernameExists["id"])) {
         unset($checkIfUsernameExists["password"]);
-        throw new Exception("Username already exists!!");
+        self::$exceptionMessageFormat["message"]["message"]["username"] = "Username already exists!!";
+        return self::$exceptionMessageFormat;
+
+      
       }
+     
       //VALIDATION OF PROVIDED DATA
       $keys = [
         'username' => ['required','empty', 'maxLength', 'minLength', 'usernameFormat'],
@@ -59,7 +72,11 @@ class SignupRequestHandlers extends UserRequestHandlers
           "message" => $validationResult
         ];
       }
+      unset($decodedData["retyped_password"]);
+      $jsonData =json_encode($decodedData , true);
+
       $result = $userObj->create($jsonData);
+     
       $fetchUser = $userObj->get(NULL, $decodedData["username"]);
       $userId = $fetchUser["id"];
 
