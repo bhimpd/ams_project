@@ -243,6 +243,7 @@ class UserRequestHandlers implements Authorizer
 
       $result = $userObj->create(json_encode($decodedData, true));
 
+      print_r($decodedData);
       //injecting id into response from $result
       $decodedData["id"] = $result["data"]["id"];
       if (!$result) {
@@ -250,7 +251,7 @@ class UserRequestHandlers implements Authorizer
           "status" => false,
           "statusCode" => "409",
           "message" => "Unable to create user",
-          "data" => $decodedData
+          "data" => "$decodedData"
         ];
       }
       return [
