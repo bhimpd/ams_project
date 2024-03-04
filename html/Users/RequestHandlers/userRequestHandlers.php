@@ -351,7 +351,7 @@ class UserRequestHandlers implements Authorizer
       }
 
       if(isset($_POST["user_image"])){
-        $decodedData["user_mage"] = $_POST["user_image"];
+        $decodedData["user_image"] = $_POST["user_image"];
       }
       else if(isset($_FILES['user_image'])) {
        $response = self ::imageUploader();
