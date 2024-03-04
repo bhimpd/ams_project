@@ -261,7 +261,7 @@ class User
       } else {
 
         $data = json_decode($data, true);
-
+      
         //if password field is set mean it came from signup route most probably
         if (isset($data["password"])) {
           //hashing the inserted password
@@ -276,10 +276,10 @@ class User
         $sql = "INSERT INTO user ($columns) VALUES ($values)";
 
 
-
+     
         $result = $this->DBconn->conn->query($sql);
 
-
+        
         if (!$result) {
           throw new \Exception("Unable to insert user into database");
         }
@@ -287,7 +287,7 @@ class User
 
         return [
           "status " => true,
-          "message" => "User created successfulljdhslajkfg",
+          "message" => "User created successfully",
           "data" => [
             "id" => $lastInsertedId
           ]
