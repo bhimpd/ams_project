@@ -8,7 +8,7 @@ class Response
   {
     http_response_code($status);
     unset($data["statusCode"]);
-    echo json_encode($data, JSON_PRETTY_PRINT);
+    echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
   }
 }
 

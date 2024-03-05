@@ -14,20 +14,12 @@ class Repairreplace
     $this->DBconn = $DBconn;
   }
 
-  public function create($data)
-  {
-    $data = json_decode($data, true);
-    print_r($data);
+ public function  getByProductCode ($productCode){
 
-    $sql = "
-    INSERT INTO repairandreplace
-    (assets_id , category_id , status , assigned_to)
-    VALUES
-    ()
-    
-    ";
+  $dynamicQuery = new DynamicQuery($this->DBconn);
+  return $dynamicQuery->get("repairandreplace" , "assets_id" , $productCode);
 
-  }
+ }
 
   public function get(...$options)
   {
@@ -44,10 +36,9 @@ class Repairreplace
       $sql = "
       SELECT repairandreplace.id as 'id' ,
       repairandreplace.assets_id as 'Product-Code', 
-      assets.name as 'Name' , 
       category.parent as 'Category', 
       repairandreplace.status as 'Status',
-      user.name as 'Assigned-to',
+     repairandreplace.assigned_to as 'Assigned-to',
       repairandreplace.assigned_date as 'Assigned Date',
       repairandreplace.repairreplace_type as 'Type'
 
@@ -122,7 +113,46 @@ class Repairreplace
           $data[] = $row;
         }
       }
+      
+     //getting name of category for each data 
+      foreach($data as $key => $value){
+        if(isset($value["Category"])){
+          $categoryObj = new Category($this->DBconn);
+          $categoryRow =$categoryObj->getById($value["Category"]);
 
+         //getting category row and setting the id and value as name
+          $data[$key]["Category"] = [
+            "id" => $value["Category"],
+            "name" => $categoryRow["data"]["category_name"]
+          ];
+        }
+        if(isset($value["Assigned-to"])){
+          $userObj = new User($this->DBconn);
+          $userRow =$userObj->get($value["Assigned-to"] , NULL);
+         
+
+         //getting category row and setting the id and value as name
+          $data[$key]["Assigned-to"] = [
+            "id" => $value["Assigned-to"],
+            "name" => $userRow["name"]
+          ];
+        }
+        if(isset($value["Product-Code"])){
+          $assetObj = new Assets($this->DBconn);
+          $assetRow =$assetObj->getDataById($value["Product-Code"]);
+          
+         
+       
+         //getting category row and setting the id and value as name
+          $data[$key]["Product-Code"] = [
+            "id" => $value["Product-Code"],
+            "name" => $assetRow["data"]["name"]
+          ];
+        }
+      
+        
+      }
+ 
       return [
         "status" => "true",
         "message" => "Data extracted successfully",
