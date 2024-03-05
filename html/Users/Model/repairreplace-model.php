@@ -28,6 +28,12 @@ class Repairreplace
     ";
 
   }
+ public function  getByProductCode ($productCode){
+
+  $dynamicQuery = new DynamicQuery($this->DBconn);
+  return $dynamicQuery->get("repairandreplace" , "assets_id" , $productCode);
+
+ }
 
   public function get(...$options)
   {
@@ -44,10 +50,9 @@ class Repairreplace
       $sql = "
       SELECT repairandreplace.id as 'id' ,
       repairandreplace.assets_id as 'Product-Code', 
-      assets.name as 'Name' , 
       category.parent as 'Category', 
       repairandreplace.status as 'Status',
-      user.name as 'Assigned-to',
+     repairandreplace.assigned_to as 'Assigned-to',
       repairandreplace.assigned_date as 'Assigned Date',
       repairandreplace.repairreplace_type as 'Type'
 
@@ -135,6 +140,31 @@ class Repairreplace
             "name" => $categoryRow["data"]["category_name"]
           ];
         }
+        if(isset($value["Assigned-to"])){
+          $userObj = new User($this->DBconn);
+          $userRow =$userObj->get($value["Assigned-to"] , NULL);
+         
+
+         //getting category row and setting the id and value as name
+          $data[$key]["Assigned-to"] = [
+            "id" => $value["Assigned-to"],
+            "name" => $userRow["name"]
+          ];
+        }
+        if(isset($value["Product-Code"])){
+          $assetObj = new Assets($this->DBconn);
+          $assetRow =$assetObj->getDataById($value["Product-Code"]);
+          
+         
+       
+         //getting category row and setting the id and value as name
+          $data[$key]["Product-Code"] = [
+            "id" => $value["Product-Code"],
+            "name" => $assetRow["data"]["name"]
+          ];
+        }
+      
+        
       }
  
       return [

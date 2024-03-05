@@ -71,7 +71,7 @@ class LocationRequestHandlers implements Authorizer
       return [
         "status" => "false",
         "statusCode" => 403,
-        "message" => "Location alredy exists",
+        "message" => "Location already exists",
         "data" => [
           "id" => $checkIfLocationExists["data"]["id"]
         ]

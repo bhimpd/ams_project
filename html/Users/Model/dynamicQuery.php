@@ -58,8 +58,57 @@ class DynamicQuery
     }
   }
 
-  public function insert()
+  public function insert($tableName, $data)
   {
-
+      try {
+          // Prepare placeholders for the columns and values
+          $columns = implode(', ', array_keys($data));
+          $placeholders = implode(', ', array_fill(0, count($data), '?'));
+  
+          // Prepare the SQL statement
+          $sql = "INSERT INTO $tableName ($columns) VALUES ($placeholders)";
+  
+          // Prepare the statement
+          $stmt = $this->DBconn->conn->prepare($sql);
+  
+          // Bind parameters
+          $types = ''; // Initialize a string to hold the types of parameters
+          $params = []; // Initialize an array to hold the parameters
+          foreach ($data as $value) {
+              // Determine the type of each parameter and add it to the types string
+              if (is_int($value)) {
+                  $types .= 'i'; // Integer
+              } elseif (is_float($value)) {
+                  $types .= 'd'; // Double
+              } elseif (is_string($value)) {
+                  $types .= 's'; // String
+              } else {
+                  $types .= 's'; // Default to string
+              }
+              // Add the parameter to the parameters array
+              $params[] = $value;
+          }
+  
+          // Bind parameters dynamically based on their types
+          $stmt->bind_param($types, ...$params);
+  
+          // Execute the statement
+          $stmt->execute();
+  
+          return [
+              "status" => true,
+              "message" => "Data inserted successfully!",
+              "data" => [
+                  "inserted_id" => $this->DBconn->conn->insert_id
+              ]
+          ];
+      } catch (Exception $e) {
+          return [
+              "status" => false,
+              "message" => $e->getMessage(),
+              "data" => []
+          ];
+      }
   }
+  
 }

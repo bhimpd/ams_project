@@ -62,7 +62,8 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
           "phone_number" => 15,
           "designation" => 64,
           "location" => 64,
-          "brand"=>16
+          "brand"=>16,
+          "reason" => 1000
         ];
 
         $inputLength = strlen($data[$key]);
@@ -89,7 +90,8 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
           "phone_numebr" => 6,
           "designation" => 1,
           "location" => 1,
-          "brand"=>2
+          "brand"=>2,
+          "reason" => 1
         ];
 
         $inputLength = strlen($data[$key]);
