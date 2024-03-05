@@ -14,20 +14,6 @@ class Repairreplace
     $this->DBconn = $DBconn;
   }
 
-  public function create($data)
-  {
-    $data = json_decode($data, true);
-    print_r($data);
-
-    $sql = "
-    INSERT INTO repairandreplace
-    (assets_id , category_id , status , assigned_to)
-    VALUES
-    ()
-    
-    ";
-
-  }
  public function  getByProductCode ($productCode){
 
   $dynamicQuery = new DynamicQuery($this->DBconn);
