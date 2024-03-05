@@ -62,7 +62,9 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
           "phone_numebr" => 15,
           "designation" => 64,
           "location" => 64,
-          "brand"=>16
+          "brand"=>16,
+          "plan_name"=>64,
+          "plan_type"=>64
         ];
 
         $inputLength = strlen($data[$key]);
@@ -89,7 +91,9 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
           "phone_numebr" => 6,
           "designation" => 1,
           "location" => 1,
-          "brand"=>2
+          "brand"=>2,
+          "plan_name"=>2,
+          "plan_type"=>2
         ];
 
         $inputLength = strlen($data[$key]);

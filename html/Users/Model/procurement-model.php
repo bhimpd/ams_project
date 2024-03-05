@@ -39,33 +39,14 @@ class Procurement
                 // 'approved_by_id' => $data['approved_by_id'],
             ];
 
-            $resultInsertProcurement = null;
-            $procurement_id = null; // Initialize procurement_id
+            $number_of_items = count($data['products']);
 
-            // checking whether req_by_id already exist or not
-            $sqlCheckReqId = "SELECT id, number_of_items FROM procurements WHERE requested_by_id = '$procurementData[requested_by_id]'";
-            $resultCheckProcurement = $this->DBconn->conn->query($sqlCheckReqId);
-            if ($resultCheckProcurement) {
-                if ($resultCheckProcurement->num_rows > 0) {
-                    // User has previous procurement records, update the number_of_items
-                    $row = $resultCheckProcurement->fetch_assoc();
-                    $procurement_id = $row['id']; // Retrieve existing procurement_id
-                    $number_of_items = $row['number_of_items'] + count($data['products']);
+            $sqlInsertProcurement = "INSERT INTO procurements (requested_by_id, number_of_items, status, request_urgency)
+                                    VALUES ('$procurementData[requested_by_id]', '$number_of_items', '$procurementData[status]', '$procurementData[request_urgency]')";
+            $resultInsertProcurement = $this->DBconn->conn->query($sqlInsertProcurement);
+            $procurement_id = $this->DBconn->conn->insert_id;
 
-                    $sqlUpdateProcurement = "UPDATE procurements SET number_of_items = '$number_of_items' WHERE requested_by_id = '$procurementData[requested_by_id]'";
-                    $resultUpdateProcurement = $this->DBconn->conn->query($sqlUpdateProcurement);
-                } else {
-                    // User does not have previous procurement records, insert a new row
-                    $number_of_items = count($data['products']);
-
-                    $sqlInsertProcurement = "INSERT INTO procurements (requested_by_id, number_of_items, status, request_urgency)
-                                             VALUES ('$procurementData[requested_by_id]', '$number_of_items', '$procurementData[status]', '$procurementData[request_urgency]')";
-                    $resultInsertProcurement = $this->DBconn->conn->query($sqlInsertProcurement);
-                    $procurement_id = $this->DBconn->conn->insert_id; // Retrieve the new procurement_id
-                }
-            }
-
-            if (!$resultCheckProcurement || (!$resultInsertProcurement && !$resultUpdateProcurement)) {
+            if (!$resultInsertProcurement) {
                 return [
                     "status" => false,
                     "message" => "Failed to insert or update data in procurements table"
@@ -76,7 +57,7 @@ class Procurement
                 $product_name = ucfirst($product['product_name']);
                 $estimated_price = number_format($product['estimated_price'], 2, '.', '');
                 $sqlProduct = "INSERT INTO procurements_products (product_name, procurement_id, category_id, brand, estimated_price, link)
-                               VALUES ('$product_name', '$procurement_id', '$product[category_id]', '$product[brand]', '$estimated_price', '$product[link]')";
+                   VALUES ('$product_name', '$procurement_id', '$product[category_id]', '$product[brand]', '$estimated_price', '$product[link]')";
 
                 $resultProduct = $this->DBconn->conn->query($sqlProduct);
 
@@ -88,16 +69,15 @@ class Procurement
                 }
             }
 
-            // $recipientEmail = "dreamypd73@gmail.com"; 
-            // ProcurementEmailSender::sendProcurementEmail($recipientEmail, $data);
-
             return [
                 "status" => true,
                 "procurement_id" => $procurement_id,
             ];
+         
+            // $recipientEmail = "dreamypd73@gmail.com"; 
+            // ProcurementEmailSender::sendProcurementEmail($recipientEmail, $data);      
         }
     }
-
 
     public function getAll($search, $sortBy, $order, $filters, $currentPage = 1, $perPage = 7)
     {
@@ -377,8 +357,7 @@ class Procurement
             return [
                 "status" => false,
                 "message" => "Procurement id $id not found",
-                "requested_by" => null,
-                "status" => null
+
             ];
         } else {
             $req = $proresult->fetch_assoc();
