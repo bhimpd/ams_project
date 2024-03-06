@@ -16,9 +16,22 @@ class Repairreplace
         break;
 
       case 'POST':
+        if ($_GET["_method"] == "PUT") {
+          goto y;
+        }
+
         self::create();
         break;
 
+
+        //label  for update
+        y:
+        self::update();
+        break;
+
+
+      case 'DELETE' :
+        self::delete();
         }
 
     }
@@ -31,6 +44,18 @@ class Repairreplace
   public static function get()
   { 
     $response = RepairreplaceRequestHandlers::get();
+    Response::respondWithJson($response, $response["statusCode"]);
+  }
+
+  public static function delete()
+  {
+    $response = RepairreplaceRequestHandlers::delete();
+    Response::respondWithJson($response, $response["statusCode"]);
+  }
+
+  public static function update()
+  {
+    $response = RepairreplaceRequestHandlers::update();
     Response::respondWithJson($response, $response["statusCode"]);
   }
   
