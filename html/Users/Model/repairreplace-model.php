@@ -26,7 +26,7 @@ class Repairreplace
     try {
 
       $defaultOptions = [
-        "orderby" => "Product-Code",
+        "orderby" => "Product_Code",
         "sortorder" => "ASC",
         "Limit" => 7,
         "repairreplace_type" => "Repair"
@@ -35,11 +35,11 @@ class Repairreplace
 
       $sql = "
       SELECT repairandreplace.id as 'id' ,
-      repairandreplace.assets_id as 'Product-Code', 
+      repairandreplace.assets_id as 'Product_Code', 
       category.parent as 'Category', 
       repairandreplace.status as 'Status',
-     repairandreplace.assigned_to as 'Assigned-to',
-      repairandreplace.assigned_date as 'Assigned Date',
+     repairandreplace.assigned_to as 'Assigned_to',
+      repairandreplace.assigned_date as 'Assigned_Date',
       repairandreplace.repairreplace_type as 'Type'
 
       FROM repairandreplace
@@ -126,26 +126,26 @@ class Repairreplace
             "name" => $categoryRow["data"]["category_name"]
           ];
         }
-        if(isset($value["Assigned-to"])){
+        if(isset($value["Assigned_to"])){
           $userObj = new User($this->DBconn);
-          $userRow =$userObj->get($value["Assigned-to"] , NULL);
+          $userRow =$userObj->get($value["Assigned_to"] , NULL);
          
 
          //getting category row and setting the id and value as name
-          $data[$key]["Assigned-to"] = [
-            "id" => $value["Assigned-to"],
+          $data[$key]["Assigned_to"] = [
+            "id" => $value["Assigned_to"],
             "name" => $userRow["name"]
           ];
         }
-        if(isset($value["Product-Code"])){
+        if(isset($value["Product_Code"])){
           $assetObj = new Assets($this->DBconn);
-          $assetRow =$assetObj->getDataById($value["Product-Code"]);
+          $assetRow =$assetObj->getDataById($value["Product_Code"]);
           
          
        
          //getting category row and setting the id and value as name
-          $data[$key]["Product-Code"] = [
-            "id" => $value["Product-Code"],
+          $data[$key]["Product_Code"] = [
+            "id" => $value["Product_Code"],
             "name" => $assetRow["data"]["name"]
           ];
         }

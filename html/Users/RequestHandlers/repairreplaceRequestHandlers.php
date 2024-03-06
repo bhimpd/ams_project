@@ -113,7 +113,7 @@ class RepairreplaceRequestHandlers implements Authorizer
     //TAKING USER PROVIDED DATA
 
     // Define the list of expected form-data parameters
-    $parameters = ['Assigned-to', 'Product-Code', 'Product-Name', 'Category', 'reason', 'product_image', 'repairreplace_type' ,'status'];
+    $parameters = ['Assigned_to', 'Product_Code', 'Product_Name', 'Category', 'reason', 'product_image', 'repairreplace_type' ,'status'];
 
     // Initialize an empty array to store the parameter values
     $formData = [];
@@ -133,11 +133,11 @@ class RepairreplaceRequestHandlers implements Authorizer
 
 
     //cehck if prodcut code already exsits in repairreplace table
-    $response = $repairreplaceObj->getByProductCode($decodedData["Product-Code"]);
+    $response = $repairreplaceObj->getByProductCode($decodedData["Product_Code"]);
 
 
     if ($response["status"] && $response["data"]["nor"] != 0) {
-      self::$exceptionMessageFormat["message"]["message"]["Product-Code"] = "Product already sent for repair or replace !";
+      self::$exceptionMessageFormat["message"]["message"]["Product_Code"] = "Product already sent for repair or replace !";
       self::$exceptionMessageFormat["statusCode"] = 404;
       return self::$exceptionMessageFormat;
     }
@@ -145,9 +145,9 @@ class RepairreplaceRequestHandlers implements Authorizer
 
     //VALIDATION OF PROVIDED DATA
     $keys = [
-      'Assigned-to' => ['required', 'empty', 'minLength'],
-      'Product-Code' => ['required', 'empty'],
-      'Product-Name' => ['required', 'empty'],
+      'Assigned_to' => ['required', 'empty', 'minLength'],
+      'Product_Code' => ['required', 'empty'],
+      'Product_Name' => ['required', 'empty'],
       'Category' => ['required', 'empty',],
       'reason' => ['required', 'empty', 'maxLength', 'minLength'],
       'repairreplace_type' => ['required', 'empty',]
@@ -182,12 +182,12 @@ class RepairreplaceRequestHandlers implements Authorizer
     //check if employee exists
     $dynamicQuery = new DynamicQuery(new DBConnect);
 
-    $queryResponse = $dynamicQuery->get("user", "name", $decodedData["Assigned-to"]);
+    $queryResponse = $dynamicQuery->get("user", "name", $decodedData["Assigned_to"]);
     if ($queryResponse["data"]["nor"] < 1) {
-      self::$exceptionMessageFormat["message"]["message"]["Assigned-to"] = "'Owner name' is not an employee !!";
+      self::$exceptionMessageFormat["message"]["message"]["Assigned_to"] = "'Owner name' is not an employee !!";
       return self::$exceptionMessageFormat;
     }
-    $decodedData["Assigned-to"] = $queryResponse["data"]["data"][0]["id"];
+    $decodedData["Assigned_to"] = $queryResponse["data"]["data"][0]["id"];
 
 
     //check if category exists
@@ -213,9 +213,9 @@ class RepairreplaceRequestHandlers implements Authorizer
     //defining insetion data based on database column names
     $insertionData = [];
     $mapping = [
-      "Assigned-to" => "assigned_to",
-      "Product-Code" => "assets_id",
-      "Product-Name" => "assets_name",
+      "Assigned_to" => "assigned_to",
+      "Product_Code" => "assets_id",
+      "Product_Name" => "assets_name",
       "Category" => "category_id",
       "reason" => "reason",
       "repairreplace_type" => "repairreplace_type",
@@ -246,7 +246,7 @@ class RepairreplaceRequestHandlers implements Authorizer
     //TAKING USER PROVIDED DATA
 
     // Define the list of expected form-data parameters
-    $parameters = ['Assigned-to', 'Product-Code', 'Product-Name', 'Category', 'reason', 'product_image', 'repairreplace_type' ,'status'];
+    $parameters = ['Assigned_to', 'Product_Code', 'Product_Name', 'Category', 'reason', 'product_image', 'repairreplace_type' ,'status'];
 
     // Initialize an empty array to store the parameter values
     $formData = [];
@@ -301,9 +301,9 @@ class RepairreplaceRequestHandlers implements Authorizer
 
      //validate the data
      $keys = [
-      'Assigned-to' => ['required', 'empty'],
-      'Product-Code' => ['required', 'empty'],
-      'Product-Name' => ['required', 'empty'],
+      'Assigned_to' => ['required', 'empty'],
+      'Product_Code' => ['required', 'empty'],
+      'Product_Name' => ['required', 'empty'],
       'Category' => ['required', 'empty',],
       'reason' => ['required', 'empty', 'maxLength', 'minLength'],
       'repairreplace_type' => ['required', 'empty',]
@@ -349,20 +349,20 @@ class RepairreplaceRequestHandlers implements Authorizer
     }
 
     //check if the employee / owner of device  exsist 
-    $queryResponse = $dynamicQuery->get("user", "name", $decodedData["Assigned-to"]);
+    $queryResponse = $dynamicQuery->get("user", "name", $decodedData["Assigned_to"]);
     if ($queryResponse["data"]["nor"] < 1) {
-      self::$exceptionMessageFormat["message"]["message"]["Assigned-to"] = "'Owner name' is not an employee !!";
+      self::$exceptionMessageFormat["message"]["message"]["Assigned_to"] = "'Owner name' is not an employee !!";
       return self::$exceptionMessageFormat;
     }
-    $decodedData["Assigned-to"] = $queryResponse["data"]["data"][0]["id"];
+    $decodedData["Assigned_to"] = $queryResponse["data"]["data"][0]["id"];
 
     //check if prodcut code already exsits in repairreplace table
     $repairreplaceObj = new Repairreplace(new DBConnect);
-    $response = $repairreplaceObj->getByProductCode($decodedData["Product-Code"]);
+    $response = $repairreplaceObj->getByProductCode($decodedData["Product_Code"]);
 
 
     if ($response["status"] && $response["data"]["nor"] != 0) {
-      self::$exceptionMessageFormat["message"]["message"]["Product-Code"] = "Product already sent for repair or replace !";
+      self::$exceptionMessageFormat["message"]["message"]["Product_Code"] = "Product already sent for repair or replace !";
       self::$exceptionMessageFormat["statusCode"] = 404;
       return self::$exceptionMessageFormat;
     }
@@ -370,9 +370,9 @@ class RepairreplaceRequestHandlers implements Authorizer
      //defining updation data based on database column names
      $updatingData = [];
      $mapping = [
-       "Assigned-to" => "assigned_to",
-       "Product-Code" => "assets_id",
-       "Product-Name" => "assets_name",
+       "Assigned_to" => "assigned_to",
+       "Product_Code" => "assets_id",
+       "Product_Name" => "assets_name",
        "Category" => "category_id",
        "reason" => "reason",
        "repairreplace_type" => "repairreplace_type",
