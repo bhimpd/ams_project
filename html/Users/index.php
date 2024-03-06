@@ -10,6 +10,7 @@ $pathOptions = [
                 "/category",
                 "/logout",
                 "/login",
+                "/signup",
                 "/user" ,
                 "/repairreplace",
                 "/procurement",
