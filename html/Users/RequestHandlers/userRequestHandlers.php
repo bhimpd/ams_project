@@ -243,7 +243,7 @@ class UserRequestHandlers implements Authorizer
 
       $result = $userObj->create(json_encode($decodedData, true));
 
-      print_r($decodedData);
+     
       //injecting id into response from $result
       $decodedData["id"] = $result["data"]["id"];
       if (!$result) {
