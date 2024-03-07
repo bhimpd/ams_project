@@ -146,6 +146,32 @@ class Assets
         ];
     }
 
+    public function getDataById($id){
+        try{
+            $sql = "
+         SELECT * from assets WHERE id = '$id'
+         ";
+         $result = $this->DBconn->conn->query($sql);
+         $row = $result->fetch_assoc();
+        
+        if($result -> num_rows < 1){
+         throw new Exception("Data not found.");
+        }
+        
+         return [
+           "status" => true ,
+           "message" => "Row extracted.",
+           "data" => $row
+         ];
+         }catch(Exception $e){
+           return [
+             "status" => false ,
+             "message" => $e ->getMessage(),
+             "data" => []
+           ];
+         }
+
+    }
     public function get(?int $id)
     {
 
