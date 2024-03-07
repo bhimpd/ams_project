@@ -63,6 +63,10 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
           "designation" => 64,
           "location" => 64,
           "brand"=>16,
+
+          "plan_name"=>64,
+          "plan_type"=>64,
+
           "reason" => 1000
         ];
 
@@ -91,6 +95,9 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
           "designation" => 1,
           "location" => 1,
           "brand"=>2,
+
+          "plan_name"=>2,
+          "plan_type"=>2,
           "reason" => 1
         ];
 
@@ -272,6 +279,16 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
           continue;
         } else {
           $validateData[$key] = [$key . " should contain either hardware or software"];
+        }
+      }
+      if (in_array('status_format', $value)) {
+        $format = ["active", "inactive"];
+        $status_value = $data[$key];
+
+        if (in_array($status_value, $format,)) {
+          continue;
+        } else {
+          $validateData[$key] = [$key . " should contain either active or inactive"];
         }
       }
 

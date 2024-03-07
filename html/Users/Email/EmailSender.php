@@ -39,7 +39,7 @@ class ProcurementEmailSender
             $emailBody .= '<p><strong>Requested By ID:</strong> ' . $procurementData['requested_by_id'] . '</p>';
             $emailBody .= '<p><strong>Status:</strong> ' . $procurementData['status'] . '</p>';
             $emailBody .= '<p><strong>Request Urgency:</strong> ' . $procurementData['request_urgency'] . '</p>';
-            $emailBody .= '<p><strong>Approved By ID:</strong> ' . $procurementData['approved_by_id'] . '</p>';
+            // $emailBody .= '<p><strong>Approved By ID:</strong> ' . $procurementData['approved_by_id'] . '</p>';
 
             $emailBody .= '<h2>Products:</h2>';
             foreach ($procurementData['products'] as $product) {

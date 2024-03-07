@@ -57,6 +57,8 @@ class Assets
     public function getAll($assets_type, $search, $sortBy, $order, $filters, $currentPage = 1, $perPage = 7)
     {
         $totalData = $this->getTotalDataCount($assets_type, $search, $filters);
+        // var_dump("inside search,filter :  " . $totalData);
+
         $pagination = PaginationHelper::paginate($currentPage, $perPage, $totalData);
         $offSet = $pagination['offSet'];
 
@@ -123,6 +125,8 @@ class Assets
         $sql .= " ORDER BY a.$sortBy $order";
         $sql .= " LIMIT $perPage OFFSET $offSet";
 
+
+        // var_dump($sql);die;
         $result = $this->DBconn->conn->query($sql);
 
         if (!$result) {
@@ -131,13 +135,13 @@ class Assets
 
         $data = $result->fetch_all(MYSQLI_ASSOC);
         $total_rows = $result->num_rows;
-
+        // var_dump("outside search :  " . $total_rows);
         if ($total_rows == 0) {
             throw new Exception("No data found for the provided search term.");
         }
 
         return [
-            "total data" => $totalData,
+            "totalData" => $totalData,
             "data" => $data
         ];
     }
@@ -216,7 +220,7 @@ class Assets
         ];
     }
 
-    public function update($data,$id)
+    public function update($data, $id)
     {
 
 
@@ -274,7 +278,6 @@ class Assets
         ];
     }
 
-
     private function getTotalDataCount($assets_type, $search, $filters)
     {
         $sql = "SELECT COUNT(*) AS total_count FROM " . self::TABLE . " AS a
@@ -315,7 +318,6 @@ class Assets
 
         $row = $result->fetch_assoc();
         $total_count = $row['total_count'];
-
         return $total_count;
     }
 }

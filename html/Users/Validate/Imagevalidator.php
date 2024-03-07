@@ -22,7 +22,7 @@ class Imagevalidator
         if ($image['size'] > $maxFileSize) {
             return [
                 "status" => false,
-                "message" => "Image size exceeds the maximum limit of 3 MB."
+                "message" => "Image size exceeds the maximum limit of 5 MB."
             ];
         }
        

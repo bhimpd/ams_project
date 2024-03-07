@@ -14,7 +14,8 @@ $pathOptions = [
                 "/user" ,
                 "/repairreplace",
                 "/procurement",
-                "/assets"
+                "/assets",
+                "/plans"
               ];
               
 //dyniamically creating callback names
