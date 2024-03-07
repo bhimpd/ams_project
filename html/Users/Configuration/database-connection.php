@@ -11,22 +11,19 @@ class DBConnect
   private $hostname;
   private $username;
   private $password;
-  private $database = "ams"; //"ams"
+  private $database = "mainams"; //"ams"
 
   public $conn;
 
   //begins connection on object instantiation
   public function __construct()
   {
-    $this->hostname = "amsdb";  //"amsdb";
-    $this->username = "sanchay";    //"sanchay";
-    $this->password = "sanchay";  //"sanchay";
+    $this->hostname = "localhost";  //"amsdb";
+    $this->username = "root";    //"sanchay";
+    $this->password = "";  //"sanchay";
     $this->connectToDatabase();
   }
-public function __destruct()
-{
-  // $this->disconnectFromDatabase();
-}
+
   public function connectToDatabase()
   {
     try {
@@ -43,7 +40,6 @@ public function __destruct()
   public function disconnectFromDatabase()
   {
     try {
-
       if ($this->conn) {
         $this->conn->close();
       } else {
