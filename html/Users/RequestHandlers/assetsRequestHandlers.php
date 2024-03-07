@@ -59,7 +59,6 @@ class AssetsRequestHandlers
                 ];
             }
 
-
             if (isset($_FILES['assets_image'])) {
                 $image = $_FILES['assets_image'];
 
@@ -91,7 +90,6 @@ class AssetsRequestHandlers
             } else {
                 throw new Exception("No image file uploaded");
             }
-
 
             $result = $assetsObj->create($decodedData);
 
@@ -146,7 +144,6 @@ class AssetsRequestHandlers
 
         return self::getAssetById();
     }
-
 
     public static function getAllAssets()
     {

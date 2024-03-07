@@ -59,7 +59,8 @@ class PlansRequestHandler
             }
             // Determine the payment method
 
-            var_dump("strpe here");die;
+            var_dump("strpe here");
+            die;
             if ($paymentMethod === 'stripe') {
                 // Process payment with Stripe
                 $stripeKey = $_ENV['STRIPE_SECRET_KEY'];
@@ -86,7 +87,8 @@ class PlansRequestHandler
                 $clientSecret = $_ENV['CLIENT_SECRET_KEY'];
                 $environment = new SandboxEnvironment($clientId, $clientSecret);
                 $client = new PayPalHttpClient($environment);
-var_dump($clientId);die;
+                var_dump($clientId);
+                die;
 
                 // Implement PayPal payment logic here
                 $request = new OrdersCreateRequest();
