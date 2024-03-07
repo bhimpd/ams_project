@@ -9,13 +9,13 @@ class Imagevalidator
 
         $imageDetails = pathinfo($image['name']);
         $imageExtension = strtolower($imageDetails['extension']);
-        $validImageType = ["jpg", "jpeg", "png","webp"];
+        $validImageType = ["jpg", "png","webp"];
         $maxFileSize = 5 * 1024 * 1024; 
 
         if (!in_array($imageExtension, $validImageType)) {
             return [
                 "status" => false,
-                "message" => "Only png, jpeg, jpg image types are accepted."
+                "message" => "Only png, jpg image types are accepted."
             ];
         }
         

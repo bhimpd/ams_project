@@ -222,8 +222,6 @@ class Assets
 
     public function update($data, $id)
     {
-
-
         if (!is_array($data)) {
             throw new Exception("Invalid data format. Data must be an array.");
         }
@@ -278,17 +276,25 @@ class Assets
         ];
     }
 
-    private function getTotalDataCount($assets_type, $search, $filters)
+    public function getTotalDataCount($assets_type, $search, $filters)
     {
+
         $sql = "SELECT COUNT(*) AS total_count FROM " . self::TABLE . " AS a
             LEFT JOIN category AS c ON a.category = c.id
             LEFT JOIN user AS u ON a.assigned_to = u.id
             LEFT JOIN location AS l ON a.location = l.id
             WHERE a.assets_type = '$assets_type'";
 
-        if (!empty($search)) {
-            $sql .= " AND a.name LIKE '%$search%'";
-        }
+            if (!empty($search)) {
+                $columns = ['a.id', 'a.name', 'c.category_name', 'u.name', 'a.status', 'a.assigned_date'];
+                $searchConditions = [];
+    
+                foreach ($columns as $column) {
+                    $searchConditions[] = "$column LIKE '%$search%'";
+                }
+    
+                $sql .= " AND (" . implode(" OR ", $searchConditions) . ")";
+            }
 
         foreach ($filters as $key => $value) {
             switch ($key) {
@@ -311,13 +317,13 @@ class Assets
         }
 
         $result = $this->DBconn->conn->query($sql);
-
         if (!$result) {
             throw new Exception("Error executing the query: " . $this->DBconn->conn->error);
         }
-
+        
         $row = $result->fetch_assoc();
         $total_count = $row['total_count'];
+        // var_dump($total_count);die("here");
         return $total_count;
     }
 }

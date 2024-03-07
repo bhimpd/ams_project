@@ -59,7 +59,6 @@ class AssetsRequestHandlers
                 ];
             }
 
-
             if (isset($_FILES['assets_image'])) {
                 $image = $_FILES['assets_image'];
 
@@ -91,7 +90,6 @@ class AssetsRequestHandlers
             } else {
                 throw new Exception("No image file uploaded");
             }
-
 
             $result = $assetsObj->create($decodedData);
 
@@ -146,7 +144,6 @@ class AssetsRequestHandlers
 
         return self::getAssetById();
     }
-
 
     public static function getAllAssets()
     {
@@ -348,7 +345,7 @@ class AssetsRequestHandlers
                 'brand' => ['empty', 'minlength', 'maxLength', 'category_nameFormat'],
                 'location' => ['required', 'empty'],
                 'assigned_to' => ['empty'],
-                'status' => ['empty', 'required'],
+                'status' => ['empty', 'required','status_format'],
             ];
 
             $validationResult = Validator::validate($decodedData, $keys);
