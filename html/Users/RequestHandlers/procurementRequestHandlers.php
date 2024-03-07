@@ -5,7 +5,6 @@ namespace RequestHandlers;
 use Exception;
 use Configg\DBConnect;
 use Model\Procurement;
-use Validate\Validator;
 use Middleware\Authorization;
 use ProcurementValidator\ProcurementsValidation;
 
@@ -40,9 +39,9 @@ class ProcurementRequestHandlers
                     "message" => $procurementValidate["message"] // Return validation errors
                 ];
             }
-
+            
             $result = $procurementObj->create($jsonData);
-
+            
             if (!$result) {
                 return [
                     "status" => false,
@@ -153,6 +152,7 @@ class ProcurementRequestHandlers
     {
         $proObj = new Procurement(new DBConnect());
         $id = $_GET["id"] ?? NULL;
+
         $result = $proObj->get($id);
         $procurementInfoResult = $proObj->getProcurementInfo($id);
 
@@ -171,6 +171,7 @@ class ProcurementRequestHandlers
             "procurementInfo" => [
                 "requested_by" => $procurementInfoResult['requested_by'],
                 "urgency" => $procurementInfoResult['urgency'],
+                "user_email" => $procurementInfoResult['user_email'],
                 "total_data" => $result['total_data'],
                 "data" => $result['data']
             ],

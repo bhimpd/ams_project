@@ -46,7 +46,7 @@ class AssetsRequestHandlers
                 'brand' => ['empty', 'minlength', 'maxLength', 'category_nameFormat'],
                 'location' => ['required', 'empty'],
                 'assigned_to' => ['empty'],
-                'status' => ['empty', 'required'],
+                'status' => ['empty', 'required','status_format'],
             ];
 
             $validationResult = Validator::validate($decodedData, $keys);

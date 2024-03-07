@@ -6,29 +6,34 @@ use Exception;
 use Configg\DBConnect;
 use Model\Plan;
 use Validate\Validator;
+use PayPalCheckoutSdk\Core\PayPalHttpClient;
+use PayPalCheckoutSdk\Core\SandboxEnvironment;
+use PayPalCheckoutSdk\Orders\OrdersCreateRequest;
 
-
-// $dotenvPath = __DIR__ . ''; 
-
-// require_once __DIR__ . '/../../../vendor/autoload.php'; 
-
-$dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ . '/../../../html/'); 
-$dotenv->load(); 
+$dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ . '/../../../html/');
+$dotenv->load();
 
 class PlansRequestHandler
 {
     public static function createPlans()
     {
         try {
-            $stripeKey = $_ENV['STRIPE_SECRET_KEY'];
-            $stripe = new \Stripe\StripeClient($stripeKey);
-
             $plansObj = new Plan(new DBConnect());
             $jsonData = file_get_contents('php://input');
             $decodedData = json_decode($jsonData, true);
 
-            //VALIDATION OF PROVIDED DATA
+            // Retrieve payment_method from URL parameters
+            $paymentMethod = $_GET['payment_method'] ?? null;
 
+            // Validate payment_method
+            if (!$paymentMethod) {
+                return [
+                    "statusCode" => 400,
+                    "status" => false,
+                    "message" => "Payment method not specified in the URL."
+                ];
+            }
+            //VALIDATION OF PROVIDED DATA
             $keys = [
                 'plan_name' => ['empty', 'minLength', 'maxLength'],
                 'plan_type' => ['empty', 'minLength', 'maxLength'],
@@ -52,32 +57,80 @@ class PlansRequestHandler
                     "message" => $planValidate["message"]
                 ];
             }
-            // Process payment with Stripe
-            $customer = $stripe->paymentIntents->create([
-                'amount' => 250,
-                'currency' => 'usd',
-                // 'name'=>$decodedData['name'],
-                // 'paid_from' => 'mastercard',
-                // 'email' => $decodedData['email'],
-                // 'card_number' => $decodedData['card_number'],
-                // 'expire_date' => $decodedData['expire_date'],
-                'description' =>  'Payment for ' . $decodedData['plan_name'],
-                'payment_method' => 'pm_card_visa',
-                // 'return_url' => 'https://dashboard.stripe.com/test/balance'
+            // Determine the payment method
 
-            ]);
-// var_dump($customer);die;
-            $stripe->paymentIntents->confirm(
-                $customer->id,
-                [
-                    'payment_method' => 'pm_card_visa',
-                    'return_url' => 'https://dashboard.stripe.com/test/balance',
-                ]
-            );
+            var_dump("strpe here");die;
+            if ($paymentMethod === 'stripe') {
+                // Process payment with Stripe
+                $stripeKey = $_ENV['STRIPE_SECRET_KEY'];
+                $stripe = new \Stripe\StripeClient($stripeKey);
 
-            // var_dump($customer);die;
+                $customer = $stripe->paymentIntents->create([
+                    'amount' => 250,
+                    'currency' => 'usd',
+                    'description' =>  'Payment for ' . $decodedData['plan_name'],
+                    'payment_method' => 'pm_card_visa', // Placeholder for Stripe payment method
+                    // 'return_url' => 'https://dashboard.stripe.com/test/balance'
+                ]);
 
+                $stripe->paymentIntents->confirm(
+                    $customer->id,
+                    [
+                        'payment_method' => 'pm_card_visa', // Placeholder for Stripe payment method
+                        'return_url' => 'https://dashboard.stripe.com/test/balance',
+                    ]
+                );
+            } elseif ($paymentMethod === 'paypal') {
+                // Process payment with PayPal
+                $clientId = $_ENV['CLIENTID'];
+                $clientSecret = $_ENV['CLIENT_SECRET_KEY'];
+                $environment = new SandboxEnvironment($clientId, $clientSecret);
+                $client = new PayPalHttpClient($environment);
+var_dump($clientId);die;
 
+                // Implement PayPal payment logic here
+                $request = new OrdersCreateRequest();
+                $request->prefer('return=representation');
+                $request->body = [
+                    'intent' => 'CAPTURE',
+                    'purchase_units' => [[
+                        'amount' => [
+                            'currency_code' => 'USD',
+                            'value' => '10.00'
+                        ]
+                    ]]
+                ];
+
+                try {
+                    $response = $client->execute($request);
+
+                    // Handle PayPal response
+                    if ($response->statusCode == 201) {
+                        $order = $response->result;
+                        // Redirect to PayPal for payment approval
+                        header('Location: ' . $order->links[1]->href);
+                    } else {
+                        // Handle errors
+                        echo "Error: " . $response->statusCode;
+                    }
+                } catch (Exception $e) {
+                    // Handle exceptions
+                    echo "Exception: " . $e->getMessage();
+                }
+                // Placeholder for PayPal payment processing
+                return [
+                    "status" => false,
+                    "statusCode" => "501",
+                    "message" => "PayPal payment method is not yet implemented",
+                ];
+            } else {
+                return [
+                    "status" => false,
+                    "statusCode" => "400",
+                    "message" => "Invalid payment method specified",
+                ];
+            }
+            // Save plan details to the database
             $result = $plansObj->create($decodedData);
 
             if (!$result) {
@@ -88,6 +141,7 @@ class PlansRequestHandler
                     "data" => json_decode($jsonData, true)
                 ];
             }
+
             return [
                 "status" => true,
                 "statusCode" => "201",

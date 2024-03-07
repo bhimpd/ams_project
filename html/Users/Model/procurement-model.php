@@ -3,12 +3,10 @@
 namespace Model;
 
 use Configg\DBConnect;
-use Model\Assets;
 use PaginationHelper;
-use Routes\Assets\Assets as AssetsAssets;
 
-// use EmailProcurement\ProcurementEmailSender;
-// include __DIR__ . ".../../Email/EmailSender.php";
+use EmailProcurement\ProcurementEmailSender;
+include __DIR__ . ".../../Email/EmailSender.php";
 
 class Procurement
 {
@@ -68,14 +66,16 @@ class Procurement
                     ];
                 }
             }
+            
+            $recipientEmail = "dreamypd73@gmail.com"; 
+            ProcurementEmailSender::sendProcurementEmail($recipientEmail, $data);
 
             return [
                 "status" => true,
                 "procurement_id" => $procurement_id,
             ];
          
-            // $recipientEmail = "dreamypd73@gmail.com"; 
-            // ProcurementEmailSender::sendProcurementEmail($recipientEmail, $data);      
+                 
         }
     }
 

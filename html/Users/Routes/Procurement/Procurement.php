@@ -33,14 +33,11 @@ class Procurement
   {
 
     $response = ProcurementRequestHandlers::createProcurement();
-
     return Response::respondWithJson($response, $response["statusCode"]);
   }
 
   public static function get()
   {
-
-    
     $response = ProcurementRequestHandlers::getProcurements();
     Response::respondWithJson($response, $response["statusCode"]);
   }

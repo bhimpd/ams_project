@@ -141,7 +141,7 @@ class Assets
         }
 
         return [
-            "total data" => $totalData,
+            "totalData" => $totalData,
             "data" => $data
         ];
     }

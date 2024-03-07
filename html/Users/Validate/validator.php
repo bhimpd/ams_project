@@ -263,6 +263,16 @@ required , emmpty , maxLength , minLength ,usernameFormat , passwordFormat , ema
           $validateData[$key] = [$key . " should contain either hardware or software"];
         }
       }
+      if (in_array('status_format', $value)) {
+        $format = ["active", "inactive"];
+        $status_value = $data[$key];
+
+        if (in_array($status_value, $format,)) {
+          continue;
+        } else {
+          $validateData[$key] = [$key . " should contain either active or inactive"];
+        }
+      }
 
     }
     if (count($validateData) > 0) {
